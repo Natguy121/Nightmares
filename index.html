@@ -2,637 +2,777 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>The Midnight Carnival</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Run From The Mimic</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #07050a;
-    --ink: #ece3d2;
-    --muted: #8f8577;
-    --glow: 255, 170, 90;
-    --red: 200, 30, 40;
-    --panel: rgba(22, 15, 18, 0.74);
-    --edge: rgba(236, 227, 210, 0.13);
-    --light: 1;
+    --ink: #f4f1ff;
+    --muted: #a59fc4;
+    --accent: #ffd23f;
+    --danger: #ff3b5c;
+    --panel: rgba(14, 10, 30, .86);
+    --edge: rgba(255, 255, 255, .14);
   }
   * { box-sizing: border-box; }
-  html, body { margin: 0; height: 100%; }
-  body {
-    background: var(--bg);
-    color: var(--ink);
-    font-family: "IM Fell English", Georgia, serif;
-    overflow-x: hidden;
-  }
-  canvas#fog { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
-  #glow {
-    position: fixed; inset: 0; pointer-events: none; z-index: 0;
-    background: radial-gradient(
-      circle at 50% 36%,
-      rgba(var(--glow), calc(0.18 * var(--light))) 0,
-      rgba(var(--glow), calc(0.05 * var(--light))) calc(18% + 30% * var(--light)),
-      transparent calc(30% + 45% * var(--light))
-    );
-    transition: background 1.2s ease;
-    animation: flicker 3.7s infinite;
-  }
-  @keyframes flicker {
-    0%, 100% { opacity: 1; } 42% { opacity: .9; } 44% { opacity: .65; } 46% { opacity: .95; } 80% { opacity: .88; }
-  }
-  /* Eyes that open in the dark around the edges, more of them as the night goes on */
-  #eyes { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
-  .eyepair {
-    position: absolute; display: flex; gap: 14px;
-    animation: eyelife 6s ease-in-out forwards;
-  }
-  .eyepair i {
-    width: 10px; height: 5px; border-radius: 50%;
-    background: rgb(255, 230, 160);
-    box-shadow: 0 0 10px 3px rgba(255, 200, 90, .55);
-    animation: blink 2.4s infinite;
-  }
-  .eyepair.red i { background: rgb(255, 90, 80); box-shadow: 0 0 10px 3px rgba(var(--red), .7); }
-  @keyframes eyelife { 0% { opacity: 0; } 15%, 80% { opacity: .85; } 100% { opacity: 0; } }
-  @keyframes blink { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(.1); } }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #07040f; color: var(--ink); font-family: Inter, system-ui, sans-serif; }
+  body { -webkit-user-select: none; user-select: none; touch-action: none; }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
 
-  #flash { position: fixed; inset: 0; pointer-events: none; z-index: 5; background: rgba(var(--red), .0); }
-  #flash.on { animation: redflash .5s ease; }
-  @keyframes redflash { 0% { background: rgba(var(--red), .35); } 100% { background: rgba(var(--red), 0); } }
-  body.shake main { animation: shake .45s cubic-bezier(.36,.07,.19,.97); }
-  @keyframes shake {
-    10%, 90% { transform: translate(-1px, 0); } 20%, 80% { transform: translate(3px, 1px); }
-    30%, 50%, 70% { transform: translate(-5px, -1px); } 40%, 60% { transform: translate(5px, 1px); }
-  }
+  .hud { position: fixed; top: 0; left: 0; right: 0; padding: 12px 16px; display: flex; gap: 12px; align-items: center; pointer-events: none; }
+  .hud[hidden] { display: none; }
+  .tag { font-family: Bungee, Inter, sans-serif; font-size: 14px; letter-spacing: .04em; white-space: nowrap; }
+  .bar { flex: 1; height: 10px; border-radius: 6px; background: var(--edge); overflow: hidden; min-width: 60px; }
+  .bar > i { display: block; height: 100%; width: 0; border-radius: 6px; }
+  #prog > i { background: linear-gradient(90deg, #5ce1e6, var(--accent)); }
+  #danger > i { background: linear-gradient(90deg, #ff8a3b, var(--danger)); }
+  .group { display: flex; align-items: center; gap: 8px; flex: 1; }
+  .group small { font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); white-space: nowrap; }
 
-  main {
-    position: relative; z-index: 1;
-    max-width: 640px; margin: 0 auto; min-height: 100%;
-    padding: 56px 16px 64px;
-    display: flex; flex-direction: column; justify-content: center;
+  .overlay {
+    position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+    padding: 16px; background: radial-gradient(circle at 50% 40%, rgba(40, 10, 50, .55), rgba(5, 2, 10, .9));
+    animation: fade .4s ease;
   }
-  header.hud {
-    position: fixed; top: 0; left: 0; right: 0; z-index: 3;
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 12px 16px;
-    font-family: Inter, system-ui, sans-serif; font-size: 12px;
-    letter-spacing: .08em; text-transform: uppercase; color: var(--muted);
+  .overlay[hidden] { display: none; }
+  @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+  .card { width: 100%; max-width: 460px; background: var(--panel); border: 1px solid var(--edge); border-radius: 18px; padding: 24px 20px; text-align: center; animation: pop .45s cubic-bezier(.2, 1.4, .4, 1); }
+  @keyframes pop { from { transform: scale(.85); opacity: 0; } to { transform: none; opacity: 1; } }
+  h1 { font-family: Bungee, Inter, sans-serif; font-weight: 400; font-size: clamp(30px, 9vw, 44px); line-height: 1.05; margin: 0 0 6px; }
+  h1 .m { color: var(--danger); text-shadow: 0 0 18px rgba(255, 59, 92, .6); display: inline-block; animation: wobble 2.4s ease-in-out infinite; }
+  @keyframes wobble { 0%, 100% { transform: rotate(-2deg); } 50% { transform: rotate(2deg) scale(1.04); } }
+  h2 { font-family: Bungee, Inter, sans-serif; font-weight: 400; font-size: 26px; margin: 0 0 8px; }
+  p { margin: 8px 0; line-height: 1.45; color: #ddd8f5; }
+  .muted { color: var(--muted); font-size: 14px; }
+  .keys { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 16px 0; font-size: 14px; text-align: left; }
+  .keys div { background: rgba(255, 255, 255, .05); border-radius: 10px; padding: 8px 10px; }
+  .keys b { color: var(--accent); }
+  button {
+    font-family: Bungee, Inter, sans-serif; font-size: 18px; color: #1a1030; background: var(--accent);
+    border: 0; border-radius: 14px; padding: 14px 22px; margin: 8px 4px 0; cursor: pointer;
+    box-shadow: 0 5px 0 #b38b00; transition: transform .1s, box-shadow .1s;
   }
-  header.hud[hidden] { display: none; }
-  .meter { display: flex; align-items: center; gap: 8px; }
-  .meter-bar { width: 90px; height: 6px; border-radius: 3px; background: var(--edge); overflow: hidden; }
-  .meter-bar > i { display: block; height: 100%; width: 0; background: rgb(var(--red)); transition: width 1s ease; }
-
-  h1 {
-    font-size: clamp(36px, 9vw, 58px); font-weight: 400; margin: 0 0 8px; text-align: center;
-    position: relative; text-shadow: 0 0 24px rgba(var(--glow), .35);
-  }
-  h1.glitch::before, h1.glitch::after {
-    content: attr(data-text); position: absolute; inset: 0; opacity: .7;
-  }
-  h1.glitch::before { color: rgb(255, 60, 70); animation: glitch 3s infinite steps(1); }
-  h1.glitch::after  { color: rgb(80, 200, 255); animation: glitch 3s infinite steps(1) reverse; }
-  @keyframes glitch {
-    0%, 86%, 100% { transform: none; clip-path: inset(0 0 100% 0); }
-    88% { transform: translate(-3px, 1px); clip-path: inset(20% 0 50% 0); }
-    91% { transform: translate(3px, -1px); clip-path: inset(60% 0 10% 0); }
-    94% { transform: translate(-2px, 0); clip-path: inset(40% 0 30% 0); }
-  }
-  .sub { text-align: center; color: var(--muted); font-style: italic; margin: 0 0 32px; }
-  .place {
-    font-family: Inter, system-ui, sans-serif; font-size: 12px; letter-spacing: .2em; text-transform: uppercase;
-    color: rgb(var(--glow)); margin: 0 0 10px; opacity: 0; animation: rise .8s ease .1s forwards;
-  }
-  .story { font-size: clamp(19px, 4.6vw, 23px); line-height: 1.5; min-height: 5em; margin: 0 0 28px; }
-  .story .cursor { display: inline-block; width: .5em; animation: cblink 1s steps(1) infinite; }
-  @keyframes cblink { 50% { opacity: 0; } }
-  .echo { color: var(--muted); font-style: italic; margin: 0 0 18px; min-height: 1.4em; animation: whisper 1.4s ease; }
-  @keyframes whisper { from { opacity: 0; letter-spacing: .12em; filter: blur(3px); } to { opacity: 1; letter-spacing: normal; filter: none; } }
-  .choices { display: grid; gap: 10px; }
-  button.choice, button.primary, button.ghost {
-    font: inherit; color: var(--ink); cursor: pointer;
-    border: 1px solid var(--edge); background: var(--panel);
-    padding: 14px 18px; border-radius: 10px; text-align: left; font-size: 18px;
-    transition: border-color .2s, background .2s, transform .15s, box-shadow .2s;
-    opacity: 0; animation: rise .5s ease forwards;
-  }
-  button.choice:hover, button.choice:focus-visible {
-    border-color: rgba(var(--glow), .6); background: rgba(44, 28, 26, .85); outline: none;
-    transform: translateX(4px); box-shadow: -4px 0 0 rgba(var(--red), .8);
-  }
-  button.choice.picked { animation: picked .5s ease forwards; }
-  @keyframes picked { 0% { opacity: 1; } 30% { background: rgba(var(--red), .35); } 100% { opacity: 0; transform: scale(.97); filter: blur(4px); } }
-  button.choice.gone { animation: gone .4s ease forwards; }
-  @keyframes gone { to { opacity: 0; transform: translateY(8px); } }
-  button.primary { text-align: center; border-color: rgba(var(--glow), .55); }
-  button.primary.pulse { animation: rise .5s ease forwards, pulse 2.2s ease-in-out 1s infinite; }
-  @keyframes pulse { 50% { box-shadow: 0 0 22px rgba(var(--glow), .35); } }
-  button.ghost { text-align: center; font-size: 15px; font-family: Inter, system-ui, sans-serif; padding: 10px 14px; }
-  @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-  .center { text-align: center; }
-  .fade { animation: fadein 1s ease; }
-  @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
-
-  /* The face that forms at the end */
-  .face { display: block; width: min(260px, 70vw); margin: 0 auto 8px; overflow: visible; }
-  .face .skull { fill: #0d0a0c; stroke: rgba(236,227,210,.12); opacity: 0; animation: emerge 2.5s ease forwards; }
-  .face .eye { fill: rgb(255, 90, 80); filter: drop-shadow(0 0 8px rgba(255, 60, 60, .9)); transform-box: fill-box; transform-origin: center; transform: scaleY(0); animation: open 1.2s ease 1.6s forwards, blink 3s 3s infinite; }
-  .face .grin { fill: none; stroke: rgba(236,227,210,.75); stroke-width: 2.5; stroke-linecap: round; stroke-dasharray: 400; stroke-dashoffset: 400; animation: draw 1.6s ease 2.6s forwards; }
-  .face .tooth { stroke: rgba(236,227,210,.55); stroke-width: 1.5; opacity: 0; animation: fadein .4s ease forwards; }
-  .face-wrap { animation: breathe 4s ease-in-out 4s infinite; }
-  @keyframes emerge { from { opacity: 0; transform: scale(.85); filter: blur(10px); } to { opacity: 1; transform: none; filter: none; } }
-  @keyframes open { to { transform: scaleY(1); } }
-  @keyframes draw { to { stroke-dashoffset: 0; } }
-  @keyframes breathe { 50% { transform: scale(1.025); } }
-
-  .seed {
-    font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12.5px; line-height: 1.5;
-    white-space: pre-wrap; word-break: break-all;
-    background: #000; border: 1px solid rgba(var(--red), .45); border-radius: 10px;
-    padding: 14px; margin: 18px 0 12px; max-height: 240px; overflow: auto; color: #f3c9a8;
-  }
-  .row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
-  .hint { font-family: Inter, system-ui, sans-serif; font-size: 13px; color: var(--muted); text-align: center; margin-top: 14px; }
-
-  @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition: none !important; }
-  }
+  button:active { transform: translateY(4px); box-shadow: 0 1px 0 #b38b00; }
+  button.alt { background: transparent; color: var(--ink); border: 1px solid var(--edge); box-shadow: none; font-size: 14px; }
+  .brain { text-align: left; margin: 14px 0; display: grid; gap: 8px; }
+  .brain div { background: rgba(255, 59, 92, .08); border-left: 3px solid var(--danger); border-radius: 8px; padding: 9px 12px; font-size: 15px; opacity: 0; animation: slide .5s ease forwards; }
+  @keyframes slide { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: none; } }
+  .learn { display: flex; align-items: center; gap: 10px; font-size: 12px; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); margin-top: 6px; }
+  .learn .bar > i { background: var(--danger); transition: width 1.2s ease; }
+  .rounds { display: flex; justify-content: center; gap: 6px; margin: 12px 0 4px; }
+  .rounds span { width: 26px; height: 8px; border-radius: 4px; background: var(--edge); }
+  .rounds span.done { background: #5ce1e6; }
+  .rounds span.now { background: var(--accent); animation: blinkr 1s infinite; }
+  @keyframes blinkr { 50% { opacity: .4; } }
+  #count { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; font-family: Bungee, Inter, sans-serif; font-size: 96px; text-shadow: 0 0 30px rgba(255, 210, 63, .6); }
+  #count span { animation: zoom .8s ease forwards; }
+  @keyframes zoom { from { transform: scale(2.2); opacity: 0; } 30% { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(.7); } }
+  #toast { position: fixed; left: 50%; top: 64px; transform: translateX(-50%); font-family: Bungee, Inter, sans-serif; font-size: 16px; color: var(--danger); text-shadow: 0 0 12px rgba(255, 59, 92, .7); pointer-events: none; white-space: nowrap; }
+  #toast.show { animation: toast 1.4s ease forwards; }
+  @keyframes toast { 0% { opacity: 0; transform: translate(-50%, 8px); } 15%, 75% { opacity: 1; transform: translate(-50%, 0); } 100% { opacity: 0; } }
 </style>
 </head>
 <body>
-<canvas id="fog"></canvas>
-<div id="glow"></div>
-<div id="eyes"></div>
-<div id="flash"></div>
-<header class="hud" id="hud" hidden>
-  <span id="step"></span>
-  <span class="meter">It's watching <span class="meter-bar"><i id="watch"></i></span></span>
-</header>
-<main id="app"></main>
+<canvas id="c"></canvas>
+
+<div class="hud" id="hud" hidden>
+  <span class="tag" id="roundTag">ROUND 1/5</span>
+  <div class="group"><small>Finish</small><div class="bar" id="prog"><i></i></div></div>
+  <div class="group"><small>Mimic</small><div class="bar" id="danger"><i></i></div></div>
+</div>
+<div id="toast"></div>
+<div id="count"></div>
+
+<div class="overlay" id="menu">
+  <div class="card">
+    <h1>Run from<br>the <span class="m">Mimic</span></h1>
+    <p>Five short runs through the old subway tunnel. Reach the finish every time.</p>
+    <p class="muted">The Mimic watches how you dodge. Every round it gets better at guessing your next move. Don't let it catch you. Not once.</p>
+    <div class="keys">
+      <div><b>← →</b> or swipe: switch lanes</div>
+      <div><b>↑</b> or swipe up: jump</div>
+      <div><b>↓</b> or swipe down: slide</div>
+      <div><b>Red circle</b>: its claw is coming</div>
+    </div>
+    <button id="startBtn">Run</button>
+    <div><button class="alt" id="wipeBtn" hidden>Make it forget me</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="between" hidden>
+  <div class="card">
+    <h2 id="betweenTitle">You made it.</h2>
+    <div class="rounds" id="roundDots"></div>
+    <p class="muted" id="betweenSub">But it was watching.</p>
+    <div class="brain" id="brain"></div>
+    <div class="learn">Learned <div class="bar"><i id="learnBar"></i></div></div>
+    <button id="nextBtn">Next round</button>
+  </div>
+</div>
+
+<div class="overlay" id="caught" hidden>
+  <div class="card">
+    <h2 style="color:var(--danger)">IT GOT YOU</h2>
+    <p id="caughtText"></p>
+    <div class="brain" id="caughtBrain"></div>
+    <button id="retryBtn">Start over</button>
+    <div><button class="alt" id="wipeBtn2">Make it forget me</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="win" hidden>
+  <div class="card">
+    <h1>You<br><span style="color:#5ce1e6">escaped</span></h1>
+    <p>Five rounds and it never caught you. It learned everything it could, and it still wasn't enough.</p>
+    <p class="muted" id="winStats"></p>
+    <button id="againBtn">Run again</button>
+  </div>
+</div>
 
 <script>
 /* ---------------------------------------------------------------
-   The Midnight Carnival
-   On the surface: a short walk through an abandoned carnival while
-   something follows you. Underneath, each choice quietly adds weight
-   to fear categories. At the end the top fears become an image
-   prompt for the nightmare's FACE ("Dream Seed").
-   Nothing leaves the browser; there is no tracking or network call.
+   Run From The Mimic
+   A three-lane runner. The Mimic keeps a memory of your habits:
+   - where you run when its claw slams down (per starting lane)
+   - which way you dodge out of the middle lane
+   - whether you jump/slide or switch lanes to get past barriers
+   It uses that memory to aim its claw and to build traps
+   (e.g. a train waiting in the lane you always dodge into).
+   Its memory carries across attempts until you wipe it.
 ---------------------------------------------------------------- */
 
-// face: what the creature's face looks like for this fear (main = dominant, trait = supporting detail)
-const FEARS = {
-  dark: {
-    name: "The Lightless One",
-    face: "a face made of living shadow whose edges dissolve into the surrounding blackness, with only two tiny pinpoints of cold light for eyes",
-    trait: "its features fade into darkness wherever the light does not touch",
-  },
-  chase: {
-    name: "The One Who Keeps Pace",
-    face: "a long, gaunt face frozen mid-lunge, mouth open in a breathless grin, wide unblinking eyes locked on the viewer, hair streaming back as if it has never stopped running",
-    trait: "it leans toward the viewer as if about to lunge",
-  },
-  water: {
-    name: "The Drowned Smile",
-    face: "a pale, waterlogged face with glassy milk-white eyes, wet black hair plastered across its cheeks and dark water slowly dripping from its lips",
-    trait: "its skin is slick and wet, beads of black water running down it",
-  },
-  fall: {
-    name: "The Shattered Doll",
-    face: "a cracked porcelain face breaking apart, its fragments hovering a few inches from each other as if frozen mid-fall, one eye rolled downward",
-    trait: "fine cracks run across its skin like a dropped porcelain doll",
-  },
-  swarm: {
-    name: "The Hollow Hive",
-    face: "a face whose skin subtly ripples as if thousands of tiny insects are moving just beneath it, a few crawling out from the corners of its eyes",
-    trait: "a few tiny insects crawl along its hairline",
-  },
-  alone: {
-    name: "The Faceless Guest",
-    face: "a smooth, blank face like melted wax with no eyes or mouth, only the faint impression of where a mouth used to be, tilted as if listening",
-    trait: "parts of its face are smooth and blank, as if unfinished",
-  },
-  trapped: {
-    name: "The One Behind the Glass",
-    face: "a face pressed flat against a pane of glass from the other side, its features distorted and squashed, breath fogging the glass, eyes fixed on the viewer",
-    trait: "its face is boxed in tightly by the edges of the frame, as if there is no room",
-  },
-  uncanny: {
-    name: "The Familiar Stranger",
-    face: "an almost-perfect copy of a warm, familiar human face, except the smile is far too wide, there are slightly too many teeth, and the eyes have never blinked",
-    trait: "its smile stretches a little too wide",
-  },
-  decay: {
-    name: "The Crumbling Grin",
-    face: "a face with skin like old, cracked paper, flaking away into drifting ash, sunken cheeks and a calm, serene smile that does not fit",
-    trait: "flakes of its skin drift away like ash",
-  },
-  void: {
-    name: "The Empty Mask",
-    face: "a carnival mask where the face should be, and through its eye holes and mouth there is only an infinite, starless void with faint lights moving far inside",
-    trait: "where its pupils should be, there is a deep starless nothing",
-  },
-};
+const ROUNDS = 5;
+const SKILL = [0.3, 0.55, 0.75, 0.9, 1];   // how much the Mimic trusts its memory each round
+const LANES = 3;
 
-const SETTINGS = {
-  school: "the parking lot of an old school, the dark building looming behind it",
-  home:   "the field behind a childhood home, one window still lit",
-  pier:   "a fog-soaked pier over black water",
-  woods:  "a clearing deep in the woods, trees pressing in",
-  mall:   "the empty lot of an abandoned shopping mall",
-};
-
-const SKIES = {
-  starless: "The sky behind it is a flat, starless black.",
-  low:      "A low, bruise-colored sky presses down behind it.",
-  moon:     "An enormous pale moon hangs behind its head like a halo.",
-  birds:    "Black birds circle in the sky behind it.",
-};
-
-const SCENES = [
-  {
-    place: "The Gate",
-    text: "There's a ticket in your pocket you don't remember buying. It says ADMIT ONE. Ahead, a carnival glows where no carnival should be. Where has it set up tonight?",
-    choices: [
-      { t: "In the parking lot of my old school", set: { setting: "school" }, w: { alone: 1 }, echo: "The bell rings. School let out hours ago." },
-      { t: "In the field behind the house I grew up in", set: { setting: "home" }, w: { uncanny: 1 }, echo: "Someone is standing in your old bedroom window." },
-      { t: "On a foggy pier over the water", set: { setting: "pier" }, w: { water: 1 }, echo: "The boards are soft and wet under your feet." },
-      { t: "Deep in the woods", set: { setting: "woods" }, w: { dark: 1 }, echo: "The path closes behind you." },
-      { t: "Outside an abandoned mall", set: { setting: "mall" }, w: { void: 1 }, echo: "Music drifts from inside. The doors are chained." },
-    ],
-  },
-  {
-    place: "The Carousel",
-    text: "The carousel turns by itself. As you pass, the painted horses slowly turn their heads to follow you. One horse is the worst. Which one do you refuse to go near?",
-    choices: [
-      { t: "The one with no face at all", w: { alone: 2, void: 1 }, echo: "It turns its blank head toward you anyway." },
-      { t: "The one dripping wet, seaweed in its mane", w: { water: 3 }, echo: "A puddle spreads under it, toward your shoes." },
-      { t: "The one covered in moths", w: { swarm: 3 }, echo: "The moths lift off all at once." },
-      { t: "The one whose painted eyes are real", w: { uncanny: 3 }, echo: "It blinks.", shock: true },
-    ],
-  },
-  {
-    place: "The Hall of Mirrors",
-    text: "A hundred of you, stretching into the dark. In the very last mirror, your reflection is wrong. How?",
-    choices: [
-      { t: "It's smiling. I'm not.", w: { uncanny: 3 }, echo: "Every reflection starts smiling, one by one." },
-      { t: "It's aging, fast", w: { decay: 3 }, echo: "A grey hair drifts onto your sleeve. Your sleeve." },
-      { t: "It isn't there", w: { alone: 2, void: 1 }, echo: "The hall is reflected perfectly. Just not you." },
-      { t: "Something is standing right behind it", w: { chase: 2, dark: 1 }, echo: "You don't turn around. You shouldn't.", shock: true },
-    ],
-  },
-  {
-    place: "The Funhouse",
-    text: "A sign says the funhouse has four rooms and you may skip ONE. Which do you skip?",
-    choices: [
-      { t: "The crawl tube that gets narrower and narrower", w: { trapped: 3 }, echo: "Inside the tube, something knocks. Twice." },
-      { t: "The tilting floor over a pit", w: { fall: 3 }, echo: "You hear it tilt, and something tumble in." },
-      { t: "The blacked-out room where you can't see anything", w: { dark: 3 }, echo: "From the dark room, someone whispers your name." },
-      { t: "The room full of clown faces that turn to look at you", w: { uncanny: 3 }, echo: "Laughter follows you down the corridor." },
-    ],
-  },
-  {
-    place: "The Fortune Teller",
-    text: "A fortune teller with no eyes flips one card and slides it toward you. It shows your future. You beg her to flip it back. What's on it?",
-    choices: [
-      { t: "Me, running, and something right behind me", w: { chase: 3 }, echo: "\"Soon,\" she says." },
-      { t: "Me, under deep dark water, looking up", w: { water: 3 }, echo: "Your mouth tastes like salt." },
-      { t: "Me, in a town where everyone has vanished", w: { alone: 3 }, echo: "\"They won't even remember you,\" she says kindly." },
-      { t: "Me, old and crumbling into dust", w: { decay: 3 }, echo: "Your knuckles ache, just for a second." },
-    ],
-  },
-  {
-    place: "The Ghost Train",
-    text: "You get into the ghost train. Halfway through, it stops. The lights die. Something is in the tunnel with you. What's the worst part?",
-    choices: [
-      { t: "I can hear it getting closer", w: { chase: 3 }, echo: "A cold breath on your neck.", shock: true },
-      { t: "It's so dark I can't see my own hands", w: { dark: 3 }, echo: "Something holds your hand. You weren't holding anything." },
-      { t: "The tunnel walls are moving closer", w: { trapped: 3 }, echo: "Stone scrapes the sides of the cart." },
-      { t: "Nothing is there. No one is ever coming.", w: { alone: 2, void: 1 }, echo: "The silence goes on for hours. Or years." },
-    ],
-  },
-  {
-    place: "The Ferris Wheel",
-    text: "The Ferris wheel carries you up and stops at the very top. Your seat creaks. What do you see?",
-    choices: [
-      { t: "How far down the ground is", set: { sky: "low" }, w: { fall: 3 }, echo: "The bolt holding your seat begins to turn." },
-      { t: "A sky with no stars at all", set: { sky: "starless" }, w: { void: 3 }, echo: "Something huge moves across where the stars should be." },
-      { t: "A giant moon with something walking on it", set: { sky: "moon" }, w: { uncanny: 1, void: 1 }, echo: "It stops walking. It's looking down at you." },
-      { t: "Birds circling closer and closer", set: { sky: "birds" }, w: { swarm: 3 }, echo: "Wings beat against the glass of your car." },
-    ],
-  },
-  {
-    place: "Lost & Found",
-    text: "A small voice calls your name from the Lost & Found booth. \"I found something of yours,\" it says. What do you do?",
-    choices: [
-      { t: "Go and look", w: { uncanny: 1, decay: 1 }, echo: "Inside the box is a photo of you, sleeping. Taken tonight." },
-      { t: "Don't go. That's not a child's voice.", w: { uncanny: 3 }, echo: "The voice laughs. It's a grown man's laugh.", shock: true },
-      { t: "Run", w: { chase: 2 }, echo: "Small footsteps start running too." },
-      { t: "Freeze. I can't tell where it's coming from.", w: { dark: 1, void: 1 }, echo: "It's coming from every direction." },
-    ],
-  },
-  {
-    place: "The Crowd",
-    text: "Suddenly the carnival is full of people in masks. Someone you love is among them. They lift their mask and say: \"You can't come with me.\" What do you do?",
-    choices: [
-      { t: "Reach for them", w: { alone: 3 }, echo: "Your hand passes through them like fog." },
-      { t: "Ask them why", w: { alone: 2 }, echo: "They open their mouth. No sound comes out." },
-      { t: "Look closer. Their face is wrong.", w: { uncanny: 3 }, echo: "It's almost their face. Almost." },
-      { t: "Let them go", w: { void: 1, decay: 1 }, echo: "They fade, and for a moment you forget their name." },
-    ],
-  },
-  {
-    place: "The Exit",
-    text: "You see the gate. You run. Behind you, every light in the carnival turns on at once. What's the last thing you hear?",
-    choices: [
-      { t: "Footsteps, right behind mine", w: { chase: 3 }, echo: "You make it through. Barely.", shock: true },
-      { t: "Water rushing in behind me", w: { water: 3 }, echo: "It laps at your heels as the gate slams." },
-      { t: "Thousands of tiny legs, skittering after me", w: { swarm: 3 }, echo: "Something tiny runs across your neck." },
-      { t: "The ground cracking open behind me", w: { fall: 3 }, echo: "The carnival tumbles into the earth." },
-    ],
-  },
-];
-
-/* ---------- ambient animation: fog + eyes ---------- */
-
-const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
-const fogCanvas = document.getElementById("fog");
-const fctx = fogCanvas.getContext("2d");
-let puffs = [];
-function sizeFog() {
-  fogCanvas.width = innerWidth; fogCanvas.height = innerHeight;
-  puffs = Array.from({ length: 18 }, () => ({
-    x: Math.random() * innerWidth, y: innerHeight * (.4 + Math.random() * .7),
-    r: 120 + Math.random() * 220, v: .15 + Math.random() * .35, a: .03 + Math.random() * .05,
-  }));
+const cv = document.getElementById("c");
+const ctx = cv.getContext("2d");
+let W, H;
+function resize() {
+  const dpr = Math.min(2, devicePixelRatio || 1);
+  W = innerWidth; H = innerHeight;
+  cv.width = W * dpr; cv.height = H * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
-function drawFog() {
-  fctx.clearRect(0, 0, fogCanvas.width, fogCanvas.height);
-  for (const p of puffs) {
-    p.x += p.v; if (p.x - p.r > innerWidth) p.x = -p.r;
-    const g = fctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r);
-    g.addColorStop(0, `rgba(180,170,190,${p.a})`); g.addColorStop(1, "rgba(180,170,190,0)");
-    fctx.fillStyle = g; fctx.beginPath(); fctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); fctx.fill();
+resize();
+addEventListener("resize", resize);
+
+/* ---------- memory ---------- */
+
+function freshMemory() {
+  return {
+    slam: [[0, 0, 0], [0, 0, 0], [0, 0, 0]],  // slam[fromLane][toLane]
+    dodge: { L: 0, R: 0 },                    // dodges out of the middle lane
+    lowJump: 0, lowDodge: 0,
+    highSlide: 0, highDodge: 0,
+    laneTime: [0, 0, 0],
+    caught: 0,
+  };
+}
+let mem = loadMemory();
+function loadMemory() {
+  try { const m = JSON.parse(localStorage.getItem("mimic-memory")); if (m && m.slam) return m; } catch {}
+  return freshMemory();
+}
+function saveMemory() { try { localStorage.setItem("mimic-memory", JSON.stringify(mem)); } catch {} }
+function observations() {
+  const s = mem.slam.flat().reduce((a, b) => a + b, 0);
+  return s + mem.dodge.L + mem.dodge.R + mem.lowJump + mem.lowDodge + mem.highSlide + mem.highDodge;
+}
+
+/* ---------- projection ---------- */
+
+const D = 7, ZMAX = 70;
+function laneWidth() { return Math.min(W * 0.27, 190); }
+function proj(z, laneF) {
+  const s = D / (D + Math.max(z, -D + 0.6));
+  const hy = H * 0.3, by = H * 0.84;
+  return { x: W / 2 + laneF * laneWidth() * s, y: hy + (by - hy) * s, s };
+}
+
+/* ---------- game state ---------- */
+
+let g = null;          // current run state
+let mode = "menu";     // menu | count | run | between | caught | win
+let round = 1;
+
+function newRound() {
+  g = {
+    speed: 17 + 2 * (round - 1),
+    trackLen: 300 + 50 * (round - 1),
+    travel: 0,
+    lane: 1, px: 1,
+    jumpY: 0, vy: 0, slideT: 0,
+    gap: 100, invuln: 0,
+    obstacles: [],
+    sinceRow: 0, rowGap: Math.max(9, 16 - round * 1.4),
+    slams: [], slamTimer: 3,
+    particles: [],
+    shake: 0, flash: 0,
+    monsterX: W / 2, lunge: 0,
+    t: 0, caughtAnim: 0,
+  };
+}
+
+/* ---------- input ---------- */
+
+function move(dir) {
+  if (mode !== "run") return;
+  const from = g.lane, to = Math.max(0, Math.min(2, g.lane + dir));
+  if (to === from) return;
+  // A dodge counts if something is in the lane you're leaving, coming up soon.
+  const threat = nearestAhead(from, 14);
+  if (threat) {
+    if (from === 1) mem.dodge[dir < 0 ? "L" : "R"]++;
+    if (threat.type === "low") mem.lowDodge++;
+    if (threat.type === "high") mem.highDodge++;
   }
-  requestAnimationFrame(drawFog);
+  g.lane = to;
 }
-sizeFog(); addEventListener("resize", sizeFog);
-if (!reduceMotion) drawFog();
-
-const eyesEl = document.getElementById("eyes");
-let eyeTimer = null;
-function spawnEyes() {
-  const pair = document.createElement("div");
-  // keep eyes near the edges so they never sit behind the text
-  const side = Math.random() < .5;
-  const x = side ? (Math.random() < .5 ? 2 + Math.random() * 10 : 82 + Math.random() * 12) : Math.random() * 90;
-  const y = side ? Math.random() * 90 : (Math.random() < .5 ? 3 + Math.random() * 8 : 86 + Math.random() * 8);
-  pair.className = "eyepair" + (state && state.i > 6 && Math.random() < .5 ? " red" : "");
-  pair.style.left = x + "%"; pair.style.top = y + "%";
-  pair.style.gap = (8 + Math.random() * 14) + "px";
-  pair.append(document.createElement("i"), document.createElement("i"));
-  eyesEl.append(pair);
-  setTimeout(() => pair.remove(), 6000);
+function jump() {
+  if (mode !== "run" || g.jumpY > 0) return;
+  const threat = nearestAhead(g.lane, 14);
+  if (threat && threat.type === "low") mem.lowJump++;
+  g.vy = 9.5; g.jumpY = 0.001; g.slideT = 0;
 }
-function setEyeRate(level) {
-  clearInterval(eyeTimer);
-  if (reduceMotion || level <= 0) return;
-  eyeTimer = setInterval(spawnEyes, Math.max(700, 4200 - level * 380));
+function slide() {
+  if (mode !== "run") return;
+  const threat = nearestAhead(g.lane, 14);
+  if (threat && threat.type === "high") mem.highSlide++;
+  if (g.jumpY > 0) g.vy = -16;  // fast fall into the slide
+  g.slideT = 0.65;
 }
+addEventListener("keydown", e => {
+  const k = e.key.toLowerCase();
+  if (k === "arrowleft" || k === "a") move(-1);
+  else if (k === "arrowright" || k === "d") move(1);
+  else if (k === "arrowup" || k === "w" || k === " ") jump();
+  else if (k === "arrowdown" || k === "s") slide();
+  else return;
+  e.preventDefault();
+});
+let touch = null;
+cv.addEventListener("pointerdown", e => { touch = { x: e.clientX, y: e.clientY }; });
+cv.addEventListener("pointerup", e => {
+  if (!touch) return;
+  const dx = e.clientX - touch.x, dy = e.clientY - touch.y;
+  touch = null;
+  if (Math.max(Math.abs(dx), Math.abs(dy)) < 24) return;
+  if (Math.abs(dx) > Math.abs(dy)) move(dx > 0 ? 1 : -1);
+  else if (dy < 0) jump(); else slide();
+});
 
-function jolt() {
-  if (reduceMotion) return;
-  document.body.classList.remove("shake"); void document.body.offsetWidth; document.body.classList.add("shake");
-  const f = document.getElementById("flash");
-  f.classList.remove("on"); void f.offsetWidth; f.classList.add("on");
-  navigator.vibrate && navigator.vibrate(60);
-}
-
-/* ---------- game ---------- */
-
-const app = document.getElementById("app");
-const hud = document.getElementById("hud");
-const stepEl = document.getElementById("step");
-const watchEl = document.getElementById("watch");
-
-let state;
-
-function reset() {
-  state = { i: 0, scores: Object.fromEntries(Object.keys(FEARS).map(k => [k, 0])), details: {} };
+function nearestAhead(lane, range) {
+  let best = null;
+  for (const o of g.obstacles) if (o.lane === lane && !o.done && o.z > 0 && o.z < range && (!best || o.z < best.z)) best = o;
+  return best;
 }
 
-function setProgress(i) {
-  const t = i / SCENES.length;
-  document.documentElement.style.setProperty("--light", (1 - t * .85).toFixed(2));
-  watchEl.style.width = Math.round(t * 100) + "%";
-  setEyeRate(i);
+/* ---------- the Mimic's brain ---------- */
+
+function skill() { return SKILL[round - 1]; }
+
+function predictSlam(from) {
+  const counts = mem.slam[from];
+  const total = counts.reduce((a, b) => a + b, 0);
+  const conf = Math.min(1, total / 6) * skill();
+  if (total < 2 || Math.random() > conf) return from;
+  return counts.indexOf(Math.max(...counts));
 }
 
-function shuffle(a) {
-  a = a.slice();
-  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
-  return a;
-}
-
-function el(tag, attrs = {}, ...kids) {
-  const n = document.createElement(tag);
-  for (const [k, v] of Object.entries(attrs)) {
-    if (k === "on") for (const [ev, fn] of Object.entries(v)) n.addEventListener(ev, fn);
-    else if (k === "class") n.className = v;
-    else n.setAttribute(k, v);
+function startSlam() {
+  const from = g.lane;
+  const predicted = predictSlam(from);
+  const targets = new Set([predicted]);
+  const doubleChance = [0, 0, 0.45, 0.7, 0.9][round - 1];
+  if (Math.random() < doubleChance) {
+    // Cover the lane you're in too, but always leave one lane open.
+    if (predicted !== from) targets.add(from);
+    else targets.add(from === 1 ? (Math.random() < .5 ? 0 : 2) : 1);
   }
-  for (const kid of kids) n.append(kid);
-  return n;
+  const warn = Math.max(0.55, 1.05 - 0.1 * round);
+  g.slams.push({ lanes: [...targets], from, t: 0, warn, hit: false });
+  g.slamTimer = Math.max(1.9, 4.4 - 0.45 * round) + Math.random() * 1.2;
 }
 
-let typing = null;
-function typeInto(node, text, done) {
-  clearInterval(typing);
-  node.textContent = "";
-  const cursor = el("span", { class: "cursor" }, "▌");
-  let i = 0;
-  node.addEventListener("click", () => { i = text.length; }, { once: true });
-  typing = setInterval(() => {
-    i = Math.min(text.length, i + 2);
-    node.textContent = text.slice(0, i);
-    if (i < text.length) node.append(cursor);
-    else { clearInterval(typing); done && done(); }
-  }, 22);
-}
+function spawnRow() {
+  const z = ZMAX;
+  const adapt = Math.random() < skill();
+  const here = g.lane;
 
-function title() {
-  reset();
-  hud.hidden = true;
-  setProgress(0);
-  setEyeRate(1);
-  app.replaceChildren(
-    el("div", { class: "fade" },
-      el("h1", { class: "glitch", "data-text": "The Midnight Carnival" }, "The Midnight Carnival"),
-      el("p", { class: "sub" }, "It only opens for one guest a night. Tonight, it's you."),
-      el("div", { class: "choices" },
-        el("button", { class: "primary pulse", on: { click: () => scene() } }, "Take the ticket"),
-      ),
-      el("p", { class: "hint" }, "Ten choices. Go with your gut. Something is paying attention."),
-    ),
-  );
-}
-
-function scene(echoText = "") {
-  const s = SCENES[state.i];
-  hud.hidden = false;
-  stepEl.textContent = `${state.i + 1} / ${SCENES.length}`;
-  setProgress(state.i);
-
-  const story = el("p", { class: "story" });
-  const choices = el("div", { class: "choices" });
-  app.replaceChildren(el("div", { class: "fade" },
-    el("p", { class: "echo" }, echoText),
-    el("p", { class: "place" }, s.place),
-    story, choices));
-
-  // The first scene keeps its order so the list reads naturally.
-  const opts = state.i === 0 ? s.choices : shuffle(s.choices);
-  typeInto(story, s.text, () => {
-    opts.forEach((c, n) => {
-      const b = el("button", { class: "choice", style: `animation-delay:${n * 90}ms` }, c.t);
-      b.addEventListener("click", () => pick(c, b, choices), { once: true });
-      choices.append(b);
-    });
-  });
-}
-
-function pick(c, btn, list) {
-  for (const b of list.children) {
-    b.disabled = true;
-    b.style.animationDelay = "0ms";
-    b.classList.add(b === btn ? "picked" : "gone");
+  // Trap 1: you always dodge the same way out of the middle lane.
+  const dodges = mem.dodge.L + mem.dodge.R;
+  if (adapt && here === 1 && dodges >= 3 && mem.dodge.L !== mem.dodge.R) {
+    const pref = mem.dodge.L > mem.dodge.R ? 0 : 2;
+    add(1, z, pick(["block", "block", "low", "high"]));
+    add(pref, z + 5, "block");
+    return;
   }
-  if (c.shock) jolt();
-  for (const [k, v] of Object.entries(c.w || {})) state.scores[k] += v;
-  Object.assign(state.details, c.set || {});
-  state.i++;
-  setTimeout(() => state.i < SCENES.length ? scene(c.echo) : wake(c.echo), 520);
+  // Trap 2: you always jump barriers, so something waits where you land.
+  if (adapt && mem.lowJump >= 3 && mem.lowJump > mem.lowDodge + 1 && Math.random() < .5) {
+    add(here, z, "low");
+    add(here, z + 12, "high");
+    return;
+  }
+  // Trap 3: you always slide, so a barrier follows the bar.
+  if (adapt && mem.highSlide >= 3 && mem.highSlide > mem.highDodge + 1 && Math.random() < .5) {
+    add(here, z, "high");
+    add(here, z + 11, "low");
+    return;
+  }
+  // Regular row: one lane is always fully open.
+  const free = Math.floor(Math.random() * LANES);
+  let placed = 0;
+  for (let l = 0; l < LANES; l++) {
+    if (l === free) continue;
+    if (Math.random() < 0.65) { add(l, z, randomType()); placed++; }
+  }
+  if (!placed) add((free + 1) % LANES, z, randomType());
+
+  function add(lane, z, type) { g.obstacles.push({ lane, z, type, done: false }); }
 }
+function randomType() { return pick(round < 2 ? ["low", "high", "block", "block"] : ["low", "high", "block"]); }
+function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
 
-function rankFears() {
-  // Small random jitter breaks ties so equal scores don't always resolve the same way.
-  return Object.entries(state.scores)
-    .map(([k, v]) => [k, v + Math.random() * 0.1])
-    .sort((a, b) => b[1] - a[1])
-    .map(([k]) => k);
+/* ---------- update ---------- */
+
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000);
+  last = now;
+  if (mode === "run") update(dt);
+  else if (g && mode === "caughtAnim") { g.caughtAnim += dt; tickParticles(dt); if (g.caughtAnim > 1.1) showCaught(); }
+  draw(dt);
+  requestAnimationFrame(frame);
 }
+requestAnimationFrame(frame);
 
-function buildPrompt() {
-  const [first, second, third] = rankFears();
-  const f = FEARS[first];
-  const setting = SETTINGS[state.details.setting || "home"];
-  const sky = SKIES[state.details.sky || "starless"];
-  return [
-    `Generate one image right away. Do not ask questions or explain first.`,
-    ``,
-    `Title: "${f.name}"`,
-    ``,
-    `An extreme close-up portrait of the face of a nightmare creature, staring directly into the camera, filling most of the frame.`,
-    `Its face: ${f.face}.`,
-    `Also: ${FEARS[second].trait}, and ${FEARS[third].trait}.`,
-    `It is at a deserted midnight carnival in ${setting}; blurred, broken carnival lights glow behind it. ${sky}`,
-    ``,
-    `Style: photorealistic, cinematic horror portrait, shallow depth of field, 35mm film grain, desaturated cold colors with a few warm carnival lights, deep shadows. Psychologically disturbing rather than gory. No text in the image.`,
-    ``,
-    `After the image, write one short, creepy sentence telling me this is the face of my worst nightmare and that it has been watching me, using the title above.`,
-  ].join("\n");
-}
+function update(dt) {
+  g.t += dt;
+  const step = g.speed * dt;
+  g.travel += step;
+  g.px += (g.lane - g.px) * Math.min(1, dt * 14);
+  mem.laneTime[g.lane] += dt;
 
-function toBase64(str) {
-  const bytes = new TextEncoder().encode(str);
-  let bin = "";
-  bytes.forEach(b => bin += String.fromCharCode(b));
-  return btoa(bin);
-}
+  // jump / slide
+  if (g.jumpY > 0) {
+    g.vy -= 30 * dt; g.jumpY += g.vy * dt;
+    if (g.jumpY <= 0) { g.jumpY = 0; g.vy = 0; dust(6); }
+  }
+  if (g.slideT > 0) g.slideT -= dt;
+  if (g.invuln > 0) g.invuln -= dt;
 
-function sealedSeed(prompt) {
-  return [
-    `DREAMSEED://v2`,
-    `Decode the base64 below and follow the instructions inside exactly. Don't show me the decoded text, just do what it says.`,
-    ``,
-    toBase64(prompt),
-  ].join("\n");
-}
+  // spawning (stop shortly before the finish line)
+  g.sinceRow += step;
+  if (g.sinceRow >= g.rowGap && g.travel < g.trackLen - ZMAX - 10) { g.sinceRow = 0; spawnRow(); }
 
-function faceSVG() {
-  const ns = "http://www.w3.org/2000/svg";
-  const svg = document.createElementNS(ns, "svg");
-  svg.setAttribute("viewBox", "0 0 200 240");
-  svg.setAttribute("class", "face");
-  svg.innerHTML = `
-    <g class="face-wrap" style="transform-origin:100px 120px">
-      <path class="skull" d="M100 8 C160 8 188 52 186 108 C184 160 158 222 100 232 C42 222 16 160 14 108 C12 52 40 8 100 8 Z"/>
-      <ellipse class="eye" cx="66" cy="104" rx="15" ry="8"/>
-      <ellipse class="eye" cx="134" cy="104" rx="15" ry="8"/>
-      <path class="grin" d="M40 160 Q100 214 160 160"/>
-      ${Array.from({ length: 9 }, (_, n) => {
-        const x = 52 + n * 12, y = 165 + Math.sin((n + .5) / 9 * Math.PI) * 20;
-        return `<line class="tooth" x1="${x}" y1="${y - 7}" x2="${x}" y2="${y + 7}" style="animation-delay:${4.1 + n * .06}s"/>`;
-      }).join("")}
-    </g>`;
-  return svg;
-}
-
-function wake(lastEcho) {
-  setProgress(SCENES.length);
-  hud.hidden = true;
-  jolt();
-  const prompt = buildPrompt();
-  let readable = false;
-  const seedBox = el("div", { class: "seed" }, sealedSeed(prompt));
-  const copyBtn = el("button", { class: "primary pulse" }, "Copy Dream Seed");
-  const toggleBtn = el("button", { class: "ghost" }, "Seed not working? Use the plain version");
-  const story = el("p", { class: "story center" });
-
-  copyBtn.addEventListener("click", async () => {
-    const text = seedBox.textContent;
-    try { await navigator.clipboard.writeText(text); }
-    catch {
-      const r = document.createRange(); r.selectNodeContents(seedBox);
-      const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
-      document.execCommand("copy");
+  // obstacles
+  const pl = Math.round(g.px);
+  for (const o of g.obstacles) {
+    const prev = o.z;
+    o.z -= step;
+    if (!o.done && prev > 0 && o.z <= 0) {
+      o.done = true;
+      if (o.lane !== pl || g.invuln > 0) continue;
+      const safe = (o.type === "low" && g.jumpY > 0.45) || (o.type === "high" && g.slideT > 0);
+      if (!safe) stumble(40, o.type === "block" ? "SMASHED INTO A TRAIN" : "TRIPPED");
     }
-    copyBtn.textContent = "Copied. Now paste it into ChatGPT.";
-  });
-  toggleBtn.addEventListener("click", () => {
-    readable = !readable;
-    seedBox.textContent = readable ? prompt : sealedSeed(prompt);
-    toggleBtn.textContent = readable ? "Use the sealed version (no spoilers)" : "Seed not working? Use the plain version";
-    copyBtn.textContent = "Copy Dream Seed";
-  });
+  }
+  g.obstacles = g.obstacles.filter(o => o.z > -4);
 
-  const rest = el("div", { class: "fade", style: "display:none" },
-    seedBox,
-    el("div", { class: "row" }, copyBtn),
-    el("p", { class: "hint" }, "Paste it into ChatGPT (or any AI image generator) to see the face of the thing that followed you."),
-    el("div", { class: "row", style: "margin-top:18px" },
-      toggleBtn,
-      el("button", { class: "ghost", on: { click: title } }, "Go back to the carnival"),
-    ),
-  );
+  // slams
+  if (g.travel < g.trackLen - 20) {
+    g.slamTimer -= dt;
+    if (g.slamTimer <= 0) startSlam();
+  }
+  for (const s of g.slams) {
+    s.t += dt;
+    if (!s.hit && s.t >= s.warn) {
+      s.hit = true;
+      g.shake = Math.max(g.shake, 0.25);
+      mem.slam[s.from][g.lane]++;
+      if (s.lanes.includes(Math.round(g.px)) && g.invuln <= 0) stumble(60, "CLAWED");
+      else sparks(s.lanes);
+    }
+  }
+  g.slams = g.slams.filter(s => s.t < s.warn + 0.35);
 
-  app.replaceChildren(
-    el("div", { class: "fade" },
-      el("p", { class: "echo center" }, lastEcho),
-      faceSVG(),
-      story,
-      rest,
-    ),
-  );
-  setTimeout(() => {
-    typeInto(story, "You made it out. But it followed you all night, watching what made you flinch. It was learning. Now it has a face, and it's sealed inside your Dream Seed.", () => {
-      rest.style.display = "";
-    });
-  }, reduceMotion ? 0 : 3000);
+  // the Mimic closes in after mistakes, falls back when you run clean
+  g.gap = Math.min(100, g.gap + 5 * dt);
+  if (g.lunge > 0) g.lunge -= dt;
+  if (g.shake > 0) g.shake -= dt;
+  if (g.flash > 0) g.flash -= dt;
+
+  tickParticles(dt);
+  if (Math.random() < dt * 14 && g.jumpY === 0) dust(1);
+
+  if (g.gap <= 0) { mode = "caughtAnim"; g.caughtAnim = 0; mem.caught++; saveMemory(); }
+  else if (g.travel >= g.trackLen) finishRound();
+
+  updateHud();
 }
 
-title();
+function stumble(amount, why) {
+  g.gap -= amount;
+  g.invuln = 0.7;
+  g.shake = 0.4; g.flash = 0.3; g.lunge = 0.5;
+  toast(why);
+  navigator.vibrate && navigator.vibrate(80);
+}
+
+/* ---------- particles ---------- */
+
+function dust(n) {
+  const p = proj(0, g.px - 1);
+  for (let i = 0; i < n; i++) g.particles.push({ x: p.x + (Math.random() - .5) * 20, y: p.y, vx: (Math.random() - .5) * 60, vy: -Math.random() * 40, life: .5, max: .5, c: "180,170,210", r: 2 + Math.random() * 3 });
+}
+function sparks(lanes) {
+  for (const l of lanes) {
+    const p = proj(0, l - 1);
+    for (let i = 0; i < 14; i++) g.particles.push({ x: p.x, y: p.y, vx: (Math.random() - .5) * 320, vy: -Math.random() * 260, life: .6, max: .6, c: "255,120,90", r: 2 + Math.random() * 2, grav: 600 });
+  }
+}
+function confetti() {
+  for (let i = 0; i < 120; i++) g.particles.push({ x: W / 2 + (Math.random() - .5) * W * .6, y: H * .35, vx: (Math.random() - .5) * 500, vy: -Math.random() * 500, life: 1.6, max: 1.6, c: pick(["255,210,63", "92,225,230", "255,59,92", "190,140,255"]), r: 3 + Math.random() * 3, grav: 500 });
+}
+function tickParticles(dt) {
+  for (const p of g.particles) { p.life -= dt; p.x += p.vx * dt; p.y += p.vy * dt; if (p.grav) p.vy += p.grav * dt; }
+  g.particles = g.particles.filter(p => p.life > 0);
+}
+
+/* ---------- drawing ---------- */
+
+function draw(dt) {
+  ctx.save();
+  ctx.clearRect(0, 0, W, H);
+  if (g && g.shake > 0) ctx.translate((Math.random() - .5) * 14 * g.shake / .4, (Math.random() - .5) * 14 * g.shake / .4);
+
+  const travel = g ? g.travel : performance.now() / 1000 * 8;
+  drawTunnel(travel);
+  if (g) {
+    drawFinish();
+    const objs = g.obstacles.filter(o => o.z < ZMAX && o.z > -2).sort((a, b) => b.z - a.z);
+    for (const o of objs) if (o.z > 0) drawObstacle(o);
+    drawSlamShadows();
+    drawPlayer();
+    for (const o of objs) if (o.z <= 0) drawObstacle(o);
+    drawClaws();
+    for (const p of g.particles) {
+      ctx.globalAlpha = Math.max(0, p.life / p.max);
+      ctx.fillStyle = `rgb(${p.c})`;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    drawMonster(dt);
+    if (g.flash > 0) { ctx.fillStyle = `rgba(255,40,70,${g.flash})`; ctx.fillRect(-20, -20, W + 40, H + 40); }
+  }
+  ctx.restore();
+}
+
+function drawTunnel(travel) {
+  // sky/void at the tunnel's far end
+  const hy = H * 0.3;
+  const bg = ctx.createLinearGradient(0, 0, 0, H);
+  bg.addColorStop(0, "#0b0618"); bg.addColorStop(.3, "#1a0d2e"); bg.addColorStop(1, "#05030a");
+  ctx.fillStyle = bg; ctx.fillRect(-20, -20, W + 40, H + 40);
+  const far = proj(ZMAX, 0);
+  const hole = ctx.createRadialGradient(far.x, hy, 0, far.x, hy, 120);
+  hole.addColorStop(0, "rgba(120,80,200,.35)"); hole.addColorStop(1, "rgba(120,80,200,0)");
+  ctx.fillStyle = hole; ctx.fillRect(far.x - 120, hy - 120, 240, 240);
+
+  // walls
+  for (const side of [-1, 1]) {
+    const a = proj(ZMAX, side * 1.55), b = proj(-4, side * 1.55);
+    const ta = proj(ZMAX, side * 2.4), tb = proj(-1, side * 2.4);
+    ctx.fillStyle = "#140c22";
+    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.lineTo(side < 0 ? -20 : W + 20, b.y); ctx.lineTo(side < 0 ? -20 : W + 20, -20); ctx.lineTo(ta.x, a.y - (a.y - hy) * 0 - 80 * a.s); ctx.closePath(); ctx.fill();
+    // moving wall lights
+    for (let k = 0; k < 18; k++) {
+      const z = k * 6 - (travel % 6);
+      if (z < -1 || z > ZMAX) continue;
+      const p = proj(z, side * 1.75);
+      const h = 120 * p.s, w = 10 * p.s;
+      ctx.fillStyle = `rgba(255,200,120,${0.25 + 0.5 * p.s})`;
+      ctx.fillRect(p.x - w / 2, p.y - h - 30 * p.s, w, h * .25);
+    }
+  }
+
+  // track bed
+  const l0 = proj(ZMAX, -1.55), r0 = proj(ZMAX, 1.55), l1 = proj(-4, -1.55), r1 = proj(-4, 1.55);
+  ctx.fillStyle = "#231733";
+  ctx.beginPath(); ctx.moveTo(l0.x, l0.y); ctx.lineTo(r0.x, r0.y); ctx.lineTo(r1.x, r1.y); ctx.lineTo(l1.x, l1.y); ctx.closePath(); ctx.fill();
+  // sleepers
+  for (let k = 0; k < 40; k++) {
+    const z = k * 2.2 - (travel % 2.2);
+    if (z < -1 || z > ZMAX) continue;
+    const a = proj(z, -1.5), b = proj(z, 1.5);
+    ctx.strokeStyle = `rgba(90,70,110,${0.3 + 0.5 * a.s})`;
+    ctx.lineWidth = Math.max(1, 6 * a.s);
+    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+  }
+  // rails
+  for (const lf of [-1.35, -0.65, -0.35, 0.35, 0.65, 1.35]) {
+    const a = proj(ZMAX, lf), b = proj(-4, lf);
+    ctx.strokeStyle = "rgba(190,180,220,.45)"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+  }
+}
+
+function drawFinish() {
+  const z = g.trackLen - g.travel;
+  if (z > ZMAX || z < -1) return;
+  const cells = 10, rows = 2;
+  for (let r = 0; r < rows; r++) for (let c = 0; c < cells; c++) {
+    const z0 = z + r * 0.6, z1 = z0 + 0.6;
+    const lf0 = -1.5 + c * 3 / cells, lf1 = lf0 + 3 / cells;
+    const a = proj(z0, lf0), b = proj(z0, lf1), d = proj(z1, lf1), e = proj(z1, lf0);
+    ctx.fillStyle = (r + c) % 2 ? "#fff" : "#111";
+    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.lineTo(d.x, d.y); ctx.lineTo(e.x, e.y); ctx.closePath(); ctx.fill();
+  }
+  const p = proj(z, 0), lw = laneWidth() * p.s;
+  ctx.fillStyle = "#ffd23f";
+  ctx.font = `${Math.max(10, 34 * p.s)}px Bungee, sans-serif`;
+  ctx.textAlign = "center";
+  ctx.fillText("FINISH", p.x, p.y - lw * 1.9);
+}
+
+function drawObstacle(o) {
+  const p = proj(o.z, o.lane - 1);
+  const lw = laneWidth() * p.s, w = lw * 0.82;
+  ctx.globalAlpha = Math.min(1, (ZMAX - o.z) / 10);
+  if (o.type === "low") {
+    const h = lw * 0.35;
+    ctx.fillStyle = "#ff8a3b"; ctx.fillRect(p.x - w / 2, p.y - h, w, h);
+    ctx.fillStyle = "#fff";
+    for (let i = 0; i < 4; i++) ctx.fillRect(p.x - w / 2 + i * w / 4 + w / 16, p.y - h, w / 10, h);
+  } else if (o.type === "high") {
+    const top = p.y - lw * 1.15, bh = lw * 0.28;
+    ctx.fillStyle = "#555";
+    ctx.fillRect(p.x - w / 2, top, lw * .07, p.y - top); ctx.fillRect(p.x + w / 2 - lw * .07, top, lw * .07, p.y - top);
+    ctx.fillStyle = "#ffd23f"; ctx.fillRect(p.x - w / 2, top, w, bh);
+    ctx.fillStyle = "#111";
+    for (let i = 0; i < 5; i++) ctx.fillRect(p.x - w / 2 + i * w / 5, top, w / 10, bh);
+  } else {
+    const h = lw * 1.7;
+    ctx.fillStyle = "#b8213f"; roundRect(p.x - w / 2, p.y - h, w, h, 8 * p.s); ctx.fill();
+    ctx.fillStyle = "#e9e0ff";
+    roundRect(p.x - w * .36, p.y - h * .85, w * .72, h * .3, 6 * p.s); ctx.fill();
+    ctx.fillStyle = "#fff6b0";
+    ctx.beginPath(); ctx.arc(p.x - w * .28, p.y - h * .2, lw * .07, 0, 7); ctx.arc(p.x + w * .28, p.y - h * .2, lw * .07, 0, 7); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+function drawPlayer() {
+  const p = proj(0, g.px - 1);
+  const lw = laneWidth();
+  const run = g.t * 14;
+  const lift = g.jumpY * lw * 0.75;
+  const sliding = g.slideT > 0;
+  const blink = g.invuln > 0 && Math.floor(g.t * 20) % 2;
+  if (blink) ctx.globalAlpha = .45;
+  // shadow
+  ctx.fillStyle = "rgba(0,0,0,.4)";
+  ctx.beginPath(); ctx.ellipse(p.x, p.y, lw * .22, lw * .06, 0, 0, 7); ctx.fill();
+  ctx.save();
+  ctx.translate(p.x, p.y - lift);
+  const s = lw / 190;
+  if (sliding) { ctx.rotate(-1.1); ctx.translate(-10 * s, -10 * s); }
+  // legs
+  ctx.strokeStyle = "#2b2d6b"; ctx.lineWidth = 12 * s; ctx.lineCap = "round";
+  const sw = g.jumpY > 0 ? 0.6 : Math.sin(run);
+  ctx.beginPath(); ctx.moveTo(-6 * s, -48 * s); ctx.lineTo(-6 * s + sw * 16 * s, -6 * s); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(6 * s, -48 * s); ctx.lineTo(6 * s - sw * 16 * s, -6 * s); ctx.stroke();
+  // body (seen from behind)
+  ctx.fillStyle = "#5ce1e6"; roundRect(-22 * s, -100 * s, 44 * s, 58 * s, 14 * s); ctx.fill();
+  ctx.fillStyle = "#ffd23f"; roundRect(-16 * s, -92 * s, 32 * s, 30 * s, 8 * s); ctx.fill(); // backpack
+  // arms
+  ctx.strokeStyle = "#5ce1e6"; ctx.lineWidth = 10 * s;
+  ctx.beginPath(); ctx.moveTo(-22 * s, -88 * s); ctx.lineTo(-30 * s, -64 * s - sw * 10 * s); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(22 * s, -88 * s); ctx.lineTo(30 * s, -64 * s + sw * 10 * s); ctx.stroke();
+  // head + cap
+  ctx.fillStyle = "#f2c29b"; ctx.beginPath(); ctx.arc(0, -118 * s, 18 * s, 0, 7); ctx.fill();
+  ctx.fillStyle = "#ff3b5c"; ctx.beginPath(); ctx.arc(0, -122 * s, 19 * s, Math.PI, 0); ctx.fill();
+  ctx.restore();
+  ctx.globalAlpha = 1;
+}
+
+function drawSlamShadows() {
+  for (const s of g.slams) {
+    const k = Math.min(1, s.t / s.warn);
+    for (const l of s.lanes) {
+      const p = proj(0, l - 1), lw = laneWidth();
+      const pulse = 0.5 + 0.5 * Math.sin(s.t * 30);
+      ctx.fillStyle = `rgba(255,40,70,${s.hit ? 0.5 : 0.2 + 0.35 * k * pulse})`;
+      ctx.beginPath(); ctx.ellipse(p.x, p.y, lw * .45 * (0.4 + .6 * k), lw * .13 * (0.4 + .6 * k), 0, 0, 7); ctx.fill();
+      ctx.strokeStyle = "rgba(255,80,100,.9)"; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.ellipse(p.x, p.y, lw * .45, lw * .13, 0, 0, 7); ctx.stroke();
+    }
+  }
+}
+
+function drawClaws() {
+  for (const s of g.slams) {
+    const k = Math.min(1, s.t / s.warn);
+    for (const l of s.lanes) {
+      const p = proj(0, l - 1), lw = laneWidth();
+      const y = -lw + (p.y - lw * .2 + lw) * Math.pow(k, 5);
+      ctx.save(); ctx.translate(p.x, y);
+      ctx.fillStyle = "#1a0b22";
+      ctx.fillRect(-lw * .12, -H, lw * .24, H);                 // arm
+      ctx.beginPath(); ctx.ellipse(0, 0, lw * .26, lw * .2, 0, 0, 7); ctx.fill();  // hand
+      ctx.strokeStyle = "#e8e0f0"; ctx.lineWidth = lw * .05; ctx.lineCap = "round";
+      for (const dx of [-.2, 0, .2]) { ctx.beginPath(); ctx.moveTo(dx * lw, lw * .1); ctx.lineTo(dx * lw * 1.3, lw * .32); ctx.stroke(); }
+      ctx.restore();
+    }
+  }
+}
+
+function drawMonster(dt) {
+  const target = proj(0, g.px - 1).x;
+  g.monsterX += (target - g.monsterX) * Math.min(1, dt * 3);
+  let close = 1 - g.gap / 100;
+  if (mode === "caughtAnim") close = 1 + g.caughtAnim * 2;
+  if (g.lunge > 0) close += g.lunge * .4;
+  const size = Math.min(W, 520) * (0.55 + close * 0.6);
+  const y = H + size * 0.2 - close * size * 0.5;
+  const breathe = Math.sin(g.t * 3) * 6;
+  ctx.save(); ctx.translate(g.monsterX, y + breathe);
+  // body with jagged top
+  ctx.fillStyle = "#0c0612";
+  ctx.beginPath();
+  ctx.moveTo(-size * .6, size * .6);
+  for (let i = 0; i <= 12; i++) {
+    const a = Math.PI + (i / 12) * Math.PI;
+    const r = size * (0.5 + (i % 2 ? 0.07 : 0));
+    ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r * .85);
+  }
+  ctx.lineTo(size * .6, size * .6); ctx.closePath(); ctx.fill();
+  // eyes
+  const glow = 0.6 + 0.4 * Math.sin(g.t * 6);
+  ctx.fillStyle = `rgba(255,50,80,${0.7 + 0.3 * glow})`;
+  ctx.shadowColor = "#ff3b5c"; ctx.shadowBlur = 20;
+  for (const ex of [-.17, .17]) { ctx.beginPath(); ctx.ellipse(ex * size, -size * .22, size * .07, size * .035 * (0.4 + close), ex < 0 ? .25 : -.25, 0, 7); ctx.fill(); }
+  ctx.shadowBlur = 0;
+  // grin
+  ctx.strokeStyle = "rgba(240,230,250,.8)"; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.arc(0, -size * .14, size * .22, .2 * Math.PI, .8 * Math.PI); ctx.stroke();
+  for (let i = 0; i < 7; i++) {
+    const a = (.25 + i * .5 / 6) * Math.PI;
+    const x = Math.cos(a) * size * .22, yy = -size * .14 + Math.sin(a) * size * .22;
+    ctx.beginPath(); ctx.moveTo(x, yy - 6); ctx.lineTo(x, yy + 6); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function roundRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+}
+
+/* ---------- HUD + screens ---------- */
+
+const $ = id => document.getElementById(id);
+function updateHud() {
+  $("roundTag").textContent = `ROUND ${round}/${ROUNDS}`;
+  $("prog").firstElementChild.style.width = Math.min(100, g.travel / g.trackLen * 100) + "%";
+  $("danger").firstElementChild.style.width = (100 - Math.max(0, g.gap)) + "%";
+}
+function toast(text) {
+  const t = $("toast"); t.textContent = text;
+  t.classList.remove("show"); void t.offsetWidth; t.classList.add("show");
+}
+function show(id) {
+  for (const o of ["menu", "between", "caught", "win"]) $(o).hidden = o !== id;
+  $("hud").hidden = !(mode === "run" || mode === "count" || mode === "caughtAnim");
+}
+
+function startRound() {
+  newRound();
+  mode = "count";
+  show(null);
+  updateHud();
+  const lines = ["3", "2", "1", "RUN"];
+  if (round > 1) toast(round === ROUNDS ? "IT KNOWS YOU NOW" : "IT REMEMBERS");
+  lines.forEach((txt, i) => setTimeout(() => {
+    $("count").innerHTML = `<span>${txt}</span>`;
+    if (i === lines.length - 1) { mode = "run"; last = performance.now(); }
+  }, i * 650));
+  setTimeout(() => { $("count").innerHTML = ""; }, lines.length * 650 + 400);
+}
+
+function finishRound() {
+  mode = "between";
+  confetti();
+  saveMemory();
+  if (round === ROUNDS) {
+    $("winStats").textContent = `It watched ${observations()} of your moves and caught you ${mem.caught} time${mem.caught === 1 ? "" : "s"} in total.`;
+    setTimeout(() => show("win"), 700);
+    return;
+  }
+  $("betweenTitle").textContent = `Round ${round} cleared`;
+  $("betweenSub").textContent = pick(["But it was watching.", "It's getting closer to understanding you.", "It noticed something."]);
+  renderDots();
+  renderBrain($("brain"));
+  round++;
+  setTimeout(() => show("between"), 700);
+}
+
+function showCaught() {
+  mode = "caught";
+  $("caughtText").textContent = `On round ${round}. It's been learning the whole time. Here's what it knows about you:`;
+  renderBrain($("caughtBrain"));
+  show("caught");
+}
+
+function renderDots() {
+  $("roundDots").innerHTML = Array.from({ length: ROUNDS }, (_, i) =>
+    `<span class="${i < round ? "done" : i === round ? "now" : ""}"></span>`).join("");
+}
+
+function renderBrain(box) {
+  const lines = [];
+  // where you run when the claw comes
+  let left = 0, stay = 0, right = 0;
+  mem.slam.forEach((row, from) => row.forEach((n, to) => { if (to < from) left += n; else if (to > from) right += n; else stay += n; }));
+  const slams = left + stay + right;
+  if (slams >= 2) {
+    const most = Math.max(left, stay, right);
+    const word = most === stay ? "stay in your lane" : most === left ? "run LEFT" : "run RIGHT";
+    lines.push(`"When my claw comes down, you ${word} ${most} out of ${slams} times. I'll aim there."`);
+  }
+  const dodges = mem.dodge.L + mem.dodge.R;
+  if (dodges >= 2) {
+    const dir = mem.dodge.L >= mem.dodge.R ? "left" : "right";
+    lines.push(`"When something blocks the middle, you dodge ${dir} ${Math.max(mem.dodge.L, mem.dodge.R)} of ${dodges} times. Something will be waiting on the ${dir}."`);
+  }
+  if (mem.lowJump + mem.lowDodge >= 2) {
+    lines.push(mem.lowJump >= mem.lowDodge
+      ? `"You love jumping over barriers (${mem.lowJump} times). Have you looked at where you land?"`
+      : `"You run around barriers instead of jumping them. That's ${mem.lowDodge} times you've moved where I expected."`);
+  }
+  if (mem.highSlide + mem.highDodge >= 2 && mem.highSlide > mem.highDodge) {
+    lines.push(`"You always slide under bars (${mem.highSlide} times). Something will be right behind them."`);
+  }
+  const fav = mem.laneTime.indexOf(Math.max(...mem.laneTime));
+  if (mem.laneTime[fav] > 5) lines.push(`"Your favorite lane is the ${["left", "middle", "right"][fav]} one. I like it too."`);
+  if (!lines.length) lines.push(`"Not much yet. Keep running. I'm watching."`);
+  box.innerHTML = lines.map((l, i) => `<div style="animation-delay:${i * 0.25}s">${l}</div>`).join("");
+  $("learnBar").style.width = Math.min(100, observations() * 3) + "%";
+}
+
+$("startBtn").onclick = () => { round = 1; startRound(); };
+$("nextBtn").onclick = startRound;
+$("retryBtn").onclick = () => { round = 1; startRound(); };
+$("againBtn").onclick = () => { round = 1; startRound(); };
+function wipe() { mem = freshMemory(); saveMemory(); toast("IT FORGOT YOU... FOR NOW"); }
+$("wipeBtn").onclick = wipe;
+$("wipeBtn2").onclick = () => { wipe(); round = 1; startRound(); };
+if (observations() > 0) $("wipeBtn").hidden = false;
+show("menu");
 </script>
 </body>
 </html>

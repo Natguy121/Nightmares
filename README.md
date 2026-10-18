@@ -1,27 +1,31 @@
-# The Midnight Carnival
+# Run From The Mimic
 
-A short horror game that is secretly a fear quiz.
+A three-lane runner (think Subway Surfers) set in a short subway tunnel with a
+finish line. Survive all 5 rounds without the Mimic catching you, not even once.
 
-Players wander an abandoned carnival at midnight (carousel, hall of mirrors,
-funhouse, fortune teller, ghost train, Ferris wheel...) while something follows
-them. They make 10 choices, and each one quietly adds points to fear categories:
-darkness, being chased, deep water, falling, swarms, being alone, being trapped,
-the uncanny, decay, and the void.
+## How the Mimic learns
 
-At the end the creature "learns their face" and the game gives them a
-**Dream Seed**: a code to paste into ChatGPT (or any AI image generator). The seed
-is a base64-encoded image prompt for an extreme close-up of **the nightmare's
-face**, built from their top three fears, where the carnival was, and the sky
-they saw. A "plain version" button shows the readable prompt if an AI won't
-decode it.
+It remembers your habits and uses them against you:
 
-Animations: drifting fog, glowing eyes that appear in the dark (more and redder
-as the night goes on), screen shake and red flash on jump-scare choices,
-glitching title, and a face that forms out of the dark at the end. Respects
-"reduce motion" settings.
+- **Where you run when its claw slams down.** It tracks, for each lane, which lane you
+  flee to, and aims the next claw there. From round 3 it can slam two lanes at once
+  (one lane is always left open).
+- **Which way you dodge out of the middle lane.** It puts a train waiting in the
+  lane you usually dodge into.
+- **Jump vs. switch lanes, slide vs. switch lanes.** If you always jump barriers, a bar
+  is waiting where you land. If you always slide, a barrier follows the bar.
+
+How much it trusts its memory goes up every round. Between rounds it tells you what
+it has learned. Its memory carries across attempts (saved in your browser) until
+you press "Make it forget me".
+
+## Controls
+
+- Arrow keys / WASD, or swipe on mobile
+- Left/right: switch lanes · Up: jump · Down: slide (or fast-fall mid-jump)
+- Hitting an obstacle or getting clawed lets it close in; running clean lets you pull away.
 
 ## Play
 
-Open `index.html` in a browser. It's a single file with no build step, and
-nothing is collected or sent anywhere; all answers stay in the player's browser.
+Open `index.html` in a browser. Single file, no build step.
 To share it, host it with GitHub Pages (Settings → Pages → deploy from branch).
