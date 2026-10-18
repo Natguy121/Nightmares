@@ -1,31 +1,34 @@
-# Run From The Mimic
+# Rooftop Mimic
 
-A three-lane runner (think Subway Surfers) set in a short subway tunnel with a
-finish line. Survive all 5 rounds without the Mimic catching you, not even once.
+A side-scrolling parkour game on one small rooftop level with a finish flag.
+Run, jump, wall-jump and slide to the flag in all 5 rounds without the Mimic catching you, not once.
 
-## How the Mimic learns
+## The Mimic hides everywhere
 
-It remembers your habits and uses them against you:
+Chimneys, vents, water tanks, billboards, dumpsters, doors. Red eyes peek out of random
+hiding spots, real or fake, so you never know which one it's in. When you get close to the
+one it's in, the spot shakes and it bursts out and chases you. Get far enough away
+(or outlast it) and it slips into another hiding spot further ahead.
 
-- **Where you run when its claw slams down.** It tracks, for each lane, which lane you
-  flee to, and aims the next claw there. From round 3 it can slam two lanes at once
-  (one lane is always left open).
-- **Which way you dodge out of the middle lane.** It puts a train waiting in the
-  lane you usually dodge into.
-- **Jump vs. switch lanes, slide vs. switch lanes.** If you always jump barriers, a bar
-  is waiting where you land. If you always slide, a barrier follows the bar.
+## It learns
 
-How much it trusts its memory goes up every round. Between rounds it tells you what
-it has learned. Its memory carries across attempts (saved in your browser) until
-you press "Make it forget me".
+The level splits twice (over the big building or through the alley underneath; across the
+crane girders or through the corridor below). The Mimic remembers:
+
+- **Which route you take** through each split, and hides on that route
+- **Where you stop and stand still**, and hides near those places
+- **Where it caught you before**
+
+Each round it hides in more places and trusts its memory more. Between rounds it tells you
+what it learned. Its memory is saved in your browser across attempts until you press
+"Make it forget me".
 
 ## Controls
 
-- Arrow keys / WASD, or swipe on mobile
-- Left/right: switch lanes · Up: jump · Down: slide (or fast-fall mid-jump)
-- Hitting an obstacle or getting clawed lets it close in; running clean lets you pull away.
+- Arrow keys / WASD / Space, or the on-screen buttons on a phone
+- Run left/right · Jump (hold for higher) · Jump while against a wall to wall-jump
+- Down while running to slide (faster than running, and fits under low beams)
 
 ## Play
 
 Open `index.html` in a browser. Single file, no build step.
-To share it, host it with GitHub Pages (Settings → Pages → deploy from branch).

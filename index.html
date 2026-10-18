@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Run From The Mimic</title>
+<title>Rooftop Mimic</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
@@ -13,7 +13,7 @@
     --muted: #a59fc4;
     --accent: #ffd23f;
     --danger: #ff3b5c;
-    --panel: rgba(14, 10, 30, .86);
+    --panel: rgba(14, 10, 30, .88);
     --edge: rgba(255, 255, 255, .14);
   }
   * { box-sizing: border-box; }
@@ -23,26 +23,31 @@
 
   .hud { position: fixed; top: 0; left: 0; right: 0; padding: 12px 16px; display: flex; gap: 12px; align-items: center; pointer-events: none; }
   .hud[hidden] { display: none; }
-  .tag { font-family: Bungee, Inter, sans-serif; font-size: 14px; letter-spacing: .04em; white-space: nowrap; }
+  .tag { font-family: Bungee, Inter, sans-serif; font-size: 14px; white-space: nowrap; }
   .bar { flex: 1; height: 10px; border-radius: 6px; background: var(--edge); overflow: hidden; min-width: 60px; }
-  .bar > i { display: block; height: 100%; width: 0; border-radius: 6px; }
-  #prog > i { background: linear-gradient(90deg, #5ce1e6, var(--accent)); }
-  #danger > i { background: linear-gradient(90deg, #ff8a3b, var(--danger)); }
-  .group { display: flex; align-items: center; gap: 8px; flex: 1; }
-  .group small { font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); white-space: nowrap; }
+  .bar > i { display: block; height: 100%; width: 0; border-radius: 6px; background: linear-gradient(90deg, #5ce1e6, var(--accent)); }
+  .status { font-family: Bungee, Inter, sans-serif; font-size: 12px; color: var(--muted); white-space: nowrap; }
+  .status.hunt { color: var(--danger); animation: blinkr .5s infinite; }
 
-  .overlay {
-    position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
-    padding: 16px; background: radial-gradient(circle at 50% 40%, rgba(40, 10, 50, .55), rgba(5, 2, 10, .9));
-    animation: fade .4s ease;
+  .pad { position: fixed; bottom: 0; left: 0; right: 0; display: flex; justify-content: space-between; padding: 16px; pointer-events: none; }
+  .pad[hidden] { display: none; }
+  .pad div { display: flex; gap: 12px; }
+  .pad button {
+    pointer-events: auto; width: 68px; height: 68px; border-radius: 50%; margin: 0; padding: 0;
+    background: rgba(255, 255, 255, .1); border: 2px solid rgba(255, 255, 255, .25); color: var(--ink);
+    font-size: 22px; box-shadow: none; font-family: Inter, sans-serif;
   }
+  .pad button.on { background: rgba(255, 210, 63, .35); }
+  @media (hover: hover) and (pointer: fine) { .pad { display: none; } }
+
+  .overlay { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; padding: 16px; background: radial-gradient(circle at 50% 40%, rgba(40, 10, 50, .55), rgba(5, 2, 10, .9)); animation: fade .4s ease; }
   .overlay[hidden] { display: none; }
   @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
-  .card { width: 100%; max-width: 460px; background: var(--panel); border: 1px solid var(--edge); border-radius: 18px; padding: 24px 20px; text-align: center; animation: pop .45s cubic-bezier(.2, 1.4, .4, 1); }
+  .card { width: 100%; max-width: 470px; max-height: 100%; overflow: auto; background: var(--panel); border: 1px solid var(--edge); border-radius: 18px; padding: 24px 20px; text-align: center; animation: pop .45s cubic-bezier(.2, 1.4, .4, 1); }
   @keyframes pop { from { transform: scale(.85); opacity: 0; } to { transform: none; opacity: 1; } }
   h1 { font-family: Bungee, Inter, sans-serif; font-weight: 400; font-size: clamp(30px, 9vw, 44px); line-height: 1.05; margin: 0 0 6px; }
-  h1 .m { color: var(--danger); text-shadow: 0 0 18px rgba(255, 59, 92, .6); display: inline-block; animation: wobble 2.4s ease-in-out infinite; }
-  @keyframes wobble { 0%, 100% { transform: rotate(-2deg); } 50% { transform: rotate(2deg) scale(1.04); } }
+  h1 .m { color: var(--danger); text-shadow: 0 0 18px rgba(255, 59, 92, .6); display: inline-block; animation: peek 3s ease-in-out infinite; }
+  @keyframes peek { 0%, 60%, 100% { transform: translateY(0); } 70% { transform: translateY(6px) scaleY(.9); } 80% { transform: translateY(-4px); } }
   h2 { font-family: Bungee, Inter, sans-serif; font-weight: 400; font-size: 26px; margin: 0 0 8px; }
   p { margin: 8px 0; line-height: 1.45; color: #ddd8f5; }
   .muted { color: var(--muted); font-size: 14px; }
@@ -59,8 +64,6 @@
   .brain { text-align: left; margin: 14px 0; display: grid; gap: 8px; }
   .brain div { background: rgba(255, 59, 92, .08); border-left: 3px solid var(--danger); border-radius: 8px; padding: 9px 12px; font-size: 15px; opacity: 0; animation: slide .5s ease forwards; }
   @keyframes slide { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: none; } }
-  .learn { display: flex; align-items: center; gap: 10px; font-size: 12px; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); margin-top: 6px; }
-  .learn .bar > i { background: var(--danger); transition: width 1.2s ease; }
   .rounds { display: flex; justify-content: center; gap: 6px; margin: 12px 0 4px; }
   .rounds span { width: 26px; height: 8px; border-radius: 4px; background: var(--edge); }
   .rounds span.done { background: #5ce1e6; }
@@ -79,22 +82,26 @@
 
 <div class="hud" id="hud" hidden>
   <span class="tag" id="roundTag">ROUND 1/5</span>
-  <div class="group"><small>Finish</small><div class="bar" id="prog"><i></i></div></div>
-  <div class="group"><small>Mimic</small><div class="bar" id="danger"><i></i></div></div>
+  <div class="bar" id="prog"><i></i></div>
+  <span class="status" id="status">HIDING…</span>
+</div>
+<div class="pad" id="pad" hidden>
+  <div><button data-k="left">◀</button><button data-k="right">▶</button></div>
+  <div><button data-k="down">⤓</button><button data-k="jump">⤒</button></div>
 </div>
 <div id="toast"></div>
 <div id="count"></div>
 
 <div class="overlay" id="menu">
   <div class="card">
-    <h1>Run from<br>the <span class="m">Mimic</span></h1>
-    <p>Five short runs through the old subway tunnel. Reach the finish every time.</p>
-    <p class="muted">The Mimic watches how you dodge. Every round it gets better at guessing your next move. Don't let it catch you. Not once.</p>
+    <h1>Rooftop<br><span class="m">Mimic</span></h1>
+    <p>Run, jump, wall-jump and slide across the rooftops to the flag. Five rounds on the same rooftops.</p>
+    <p class="muted">The Mimic hides everywhere: chimneys, vents, water tanks, dumpsters, doors. It jumps out when you get close, then hides again further ahead. Each round it learns which routes you take and where you stop, and hides there. Don't let it catch you. Not once.</p>
     <div class="keys">
-      <div><b>← →</b> or swipe: switch lanes</div>
-      <div><b>↑</b> or swipe up: jump</div>
-      <div><b>↓</b> or swipe down: slide</div>
-      <div><b>Red circle</b>: its claw is coming</div>
+      <div><b>← →</b> / A D: run</div>
+      <div><b>↑</b> / W / Space: jump</div>
+      <div><b>Jump at a wall</b>: wall-jump</div>
+      <div><b>↓</b> / S while running: slide</div>
     </div>
     <button id="startBtn">Run</button>
     <div><button class="alt" id="wipeBtn" hidden>Make it forget me</button></div>
@@ -107,7 +114,6 @@
     <div class="rounds" id="roundDots"></div>
     <p class="muted" id="betweenSub">But it was watching.</p>
     <div class="brain" id="brain"></div>
-    <div class="learn">Learned <div class="bar"><i id="learnBar"></i></div></div>
     <button id="nextBtn">Next round</button>
   </div>
 </div>
@@ -125,7 +131,7 @@
 <div class="overlay" id="win" hidden>
   <div class="card">
     <h1>You<br><span style="color:#5ce1e6">escaped</span></h1>
-    <p>Five rounds and it never caught you. It learned everything it could, and it still wasn't enough.</p>
+    <p>Five rounds and it never caught you. It hid everywhere it could think of, and it still wasn't enough.</p>
     <p class="muted" id="winStats"></p>
     <button id="againBtn">Run again</button>
   </div>
@@ -133,28 +139,68 @@
 
 <script>
 /* ---------------------------------------------------------------
-   Run From The Mimic
-   A three-lane runner. The Mimic keeps a memory of your habits:
-   - where you run when its claw slams down (per starting lane)
-   - which way you dodge out of the middle lane
-   - whether you jump/slide or switch lanes to get past barriers
-   It uses that memory to aim its claw and to build traps
-   (e.g. a train waiting in the lane you always dodge into).
+   Rooftop Mimic
+   Side-scrolling parkour on one small rooftop level. The Mimic
+   lurks in hiding spots and ambushes you. It remembers:
+   - which route you take through the two split sections
+   - where you stop and stand still
+   - where it caught you before
+   and arms the hiding spots on those routes and near those places.
    Its memory carries across attempts until you wipe it.
 ---------------------------------------------------------------- */
 
 const ROUNDS = 5;
-const SKILL = [0.3, 0.55, 0.75, 0.9, 1];   // how much the Mimic trusts its memory each round
-const LANES = 3;
+const SKILL = [0.25, 0.5, 0.7, 0.85, 1];
+const FINISH_X = 3700, WORLD_W = 3820, WORLD_H = 800, FALL_Y = 900;
+
+// Solid blocks: [x, y, w, h]
+const SOLIDS = [
+  // A: start rooftops
+  [0, 500, 700, 300], [790, 520, 290, 280],
+  // B: alley split. Lower: slide under the block. Upper: climb onto it.
+  [1080, 600, 400, 200], [1560, 600, 560, 200],
+  [1130, 520, 60, 80],                    // crate to climb from
+  [1250, 390, 220, 170],                  // block: top = upper route, underside = slide gap
+  [1700, 500, 200, 60],                   // low beam on the lower route
+  [1560, 380, 190, 26], [1830, 360, 230, 26],
+  // C: second split. Upper: crane girders. Lower: corridor.
+  [2120, 560, 180, 240],
+  [2340, 400, 120, 22], [2530, 340, 120, 22], [2720, 390, 150, 22],
+  [2300, 660, 720, 140], [2560, 560, 30, 100], // corridor + a wall to vault
+  // D: home stretch
+  [3020, 520, 300, 280], [3400, 480, 420, 320],
+];
+
+// Where the Mimic can hide. route tags tie spots to the route they sit on.
+const SPOTS = [
+  { x: 560,  y: 500, route: "A",  kind: "chimney" },
+  { x: 960,  y: 520, route: "A",  kind: "vent" },
+  { x: 1420, y: 390, route: "Bu", kind: "tank" },
+  { x: 1980, y: 360, route: "Bu", kind: "billboard" },
+  { x: 1620, y: 600, route: "Bl", kind: "dumpster" },
+  { x: 2050, y: 600, route: "Bl", kind: "door" },
+  { x: 2580, y: 340, route: "Cu", kind: "vent" },
+  { x: 2800, y: 390, route: "Cu", kind: "chimney" },
+  { x: 2440, y: 660, route: "Cl", kind: "vent" },
+  { x: 2900, y: 660, route: "Cl", kind: "door" },
+  { x: 3180, y: 520, route: "D",  kind: "tank" },
+  { x: 3560, y: 480, route: "D",  kind: "billboard" },
+];
+const CHECKPOINTS = [60, 790, 2130, 3030];
+const SECTIONS = {
+  B: { from: 1250, to: 2100, upper: y => y < 470 },
+  C: { from: 2320, to: 3000, upper: y => y < 520 },
+};
 
 const cv = document.getElementById("c");
 const ctx = cv.getContext("2d");
-let W, H;
+let W, H, scale;
 function resize() {
   const dpr = Math.min(2, devicePixelRatio || 1);
   W = innerWidth; H = innerHeight;
   cv.width = W * dpr; cv.height = H * dpr;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  scale = Math.min(H / WORLD_H, W / 620);
 }
 resize();
 addEventListener("resize", resize);
@@ -162,606 +208,513 @@ addEventListener("resize", resize);
 /* ---------- memory ---------- */
 
 function freshMemory() {
-  return {
-    slam: [[0, 0, 0], [0, 0, 0], [0, 0, 0]],  // slam[fromLane][toLane]
-    dodge: { L: 0, R: 0 },                    // dodges out of the middle lane
-    lowJump: 0, lowDodge: 0,
-    highSlide: 0, highDodge: 0,
-    laneTime: [0, 0, 0],
-    caught: 0,
-  };
+  return { routes: { B: { u: 0, l: 0 }, C: { u: 0, l: 0 } }, stops: [], caughtAt: [], caught: 0, ambushes: 0 };
 }
 let mem = loadMemory();
 function loadMemory() {
-  try { const m = JSON.parse(localStorage.getItem("mimic-memory")); if (m && m.slam) return m; } catch {}
+  try { const m = JSON.parse(localStorage.getItem("rooftop-mimic")); if (m && m.routes) return m; } catch {}
   return freshMemory();
 }
-function saveMemory() { try { localStorage.setItem("mimic-memory", JSON.stringify(mem)); } catch {} }
-function observations() {
-  const s = mem.slam.flat().reduce((a, b) => a + b, 0);
-  return s + mem.dodge.L + mem.dodge.R + mem.lowJump + mem.lowDodge + mem.highSlide + mem.highDodge;
-}
-
-/* ---------- projection ---------- */
-
-const D = 7, ZMAX = 70;
-function laneWidth() { return Math.min(W * 0.27, 190); }
-function proj(z, laneF) {
-  const s = D / (D + Math.max(z, -D + 0.6));
-  const hy = H * 0.3, by = H * 0.84;
-  return { x: W / 2 + laneF * laneWidth() * s, y: hy + (by - hy) * s, s };
-}
-
-/* ---------- game state ---------- */
-
-let g = null;          // current run state
-let mode = "menu";     // menu | count | run | between | caught | win
-let round = 1;
-
-function newRound() {
-  g = {
-    speed: 17 + 2 * (round - 1),
-    trackLen: 300 + 50 * (round - 1),
-    travel: 0,
-    lane: 1, px: 1,
-    jumpY: 0, vy: 0, slideT: 0,
-    gap: 100, invuln: 0,
-    obstacles: [],
-    sinceRow: 0, rowGap: Math.max(9, 16 - round * 1.4),
-    slams: [], slamTimer: 3,
-    particles: [],
-    shake: 0, flash: 0,
-    monsterX: W / 2, lunge: 0,
-    t: 0, caughtAnim: 0,
-  };
-}
+function saveMemory() { try { localStorage.setItem("rooftop-mimic", JSON.stringify(mem)); } catch {} }
+function knowsSomething() { return mem.routes.B.u + mem.routes.B.l + mem.routes.C.u + mem.routes.C.l + mem.stops.length > 0; }
 
 /* ---------- input ---------- */
 
-function move(dir) {
-  if (mode !== "run") return;
-  const from = g.lane, to = Math.max(0, Math.min(2, g.lane + dir));
-  if (to === from) return;
-  // A dodge counts if something is in the lane you're leaving, coming up soon.
-  const threat = nearestAhead(from, 14);
-  if (threat) {
-    if (from === 1) mem.dodge[dir < 0 ? "L" : "R"]++;
-    if (threat.type === "low") mem.lowDodge++;
-    if (threat.type === "high") mem.highDodge++;
-  }
-  g.lane = to;
-}
-function jump() {
-  if (mode !== "run" || g.jumpY > 0) return;
-  const threat = nearestAhead(g.lane, 14);
-  if (threat && threat.type === "low") mem.lowJump++;
-  g.vy = 9.5; g.jumpY = 0.001; g.slideT = 0;
-}
-function slide() {
-  if (mode !== "run") return;
-  const threat = nearestAhead(g.lane, 14);
-  if (threat && threat.type === "high") mem.highSlide++;
-  if (g.jumpY > 0) g.vy = -16;  // fast fall into the slide
-  g.slideT = 0.65;
-}
+const keys = { left: false, right: false, down: false, jump: false };
+let jumpBuffer = 0;
+const KEYMAP = { arrowleft: "left", a: "left", arrowright: "right", d: "right", arrowdown: "down", s: "down", arrowup: "jump", w: "jump", " ": "jump" };
 addEventListener("keydown", e => {
-  const k = e.key.toLowerCase();
-  if (k === "arrowleft" || k === "a") move(-1);
-  else if (k === "arrowright" || k === "d") move(1);
-  else if (k === "arrowup" || k === "w" || k === " ") jump();
-  else if (k === "arrowdown" || k === "s") slide();
-  else return;
-  e.preventDefault();
+  const k = KEYMAP[e.key.toLowerCase()]; if (!k) return;
+  if (k === "jump" && !keys.jump) jumpBuffer = 0.12;
+  keys[k] = true; e.preventDefault();
 });
-let touch = null;
-cv.addEventListener("pointerdown", e => { touch = { x: e.clientX, y: e.clientY }; });
-cv.addEventListener("pointerup", e => {
-  if (!touch) return;
-  const dx = e.clientX - touch.x, dy = e.clientY - touch.y;
-  touch = null;
-  if (Math.max(Math.abs(dx), Math.abs(dy)) < 24) return;
-  if (Math.abs(dx) > Math.abs(dy)) move(dx > 0 ? 1 : -1);
-  else if (dy < 0) jump(); else slide();
-});
+addEventListener("keyup", e => { const k = KEYMAP[e.key.toLowerCase()]; if (k) keys[k] = false; });
+for (const b of document.querySelectorAll(".pad button")) {
+  const k = b.dataset.k;
+  const on = e => { e.preventDefault(); if (k === "jump" && !keys.jump) jumpBuffer = 0.12; keys[k] = true; b.classList.add("on"); };
+  const off = e => { e.preventDefault(); keys[k] = false; b.classList.remove("on"); };
+  b.addEventListener("pointerdown", on); b.addEventListener("pointerup", off);
+  b.addEventListener("pointerleave", off); b.addEventListener("pointercancel", off);
+}
 
-function nearestAhead(lane, range) {
-  let best = null;
-  for (const o of g.obstacles) if (o.lane === lane && !o.done && o.z > 0 && o.z < range && (!best || o.z < best.z)) best = o;
-  return best;
+/* ---------- state ---------- */
+
+let mode = "menu", round = 1, g = null;
+
+function newRound() {
+  g = {
+    p: { x: 60, y: 440, w: 26, h: 56, vx: 0, vy: 0, onGround: false, wall: 0, coyote: 0, slideT: 0, facing: 1, still: 0, stopLogged: false, anim: 0 },
+    m: { state: "hidden", x: 0, y: 0, t: 0, spot: null },
+    spots: SPOTS.map(s => ({ ...s, armed: false, shake: 0, eyes: Math.random() * 6 })),
+    routeTime: { B: { u: 0, l: 0, done: false }, C: { u: 0, l: 0, done: false } },
+    camX: 0, camY: 0, t: 0, shake: 0, particles: [], checkpoint: 0, deathAnim: 0,
+  };
+  armSpots(1 + round);
 }
 
 /* ---------- the Mimic's brain ---------- */
 
 function skill() { return SKILL[round - 1]; }
-
-function predictSlam(from) {
-  const counts = mem.slam[from];
-  const total = counts.reduce((a, b) => a + b, 0);
-  const conf = Math.min(1, total / 6) * skill();
-  if (total < 2 || Math.random() > conf) return from;
-  return counts.indexOf(Math.max(...counts));
+function predictRoute(sec) {
+  const r = mem.routes[sec], total = r.u + r.l;
+  if (!total) return null;
+  return { route: r.u >= r.l ? sec + "u" : sec + "l", conf: Math.min(1, total / 3) * (Math.abs(r.u - r.l) / total) * skill() };
+}
+function spotWeight(s) {
+  let w = 1;
+  for (const sec of ["B", "C"]) {
+    const pr = predictRoute(sec);
+    if (pr && s.route.startsWith(sec)) w += s.route === pr.route ? 5 * pr.conf : -0.6 * pr.conf;
+  }
+  // places where you stood still, and where it caught you
+  const near = mem.stops.filter(x => Math.abs(x - s.x) < 260).length;
+  w += Math.min(3, near * 0.6) * skill();
+  if (mem.caughtAt.some(x => Math.abs(x - s.x) < 300)) w += 1.5 * skill();
+  return Math.max(0.15, w);
+}
+function weightedPick(list) {
+  const total = list.reduce((a, s) => a + spotWeight(s), 0);
+  let r = Math.random() * total;
+  for (const s of list) { r -= spotWeight(s); if (r <= 0) return s; }
+  return list[list.length - 1];
+}
+function armSpots(n) {
+  const pool = g.spots.filter(s => s.x > 400);
+  for (let i = 0; i < n && pool.length; i++) {
+    const s = weightedPick(pool);
+    s.armed = true;
+    pool.splice(pool.indexOf(s), 1);
+  }
+}
+// After it loses you, it slips into another hiding spot ahead of you.
+function rehide() {
+  const ahead = g.spots.filter(s => !s.armed && s.x > g.p.x + 420);
+  if (ahead.length) weightedPick(ahead).armed = true;
+  g.m.state = "hidden";
 }
 
-function startSlam() {
-  const from = g.lane;
-  const predicted = predictSlam(from);
-  const targets = new Set([predicted]);
-  const doubleChance = [0, 0, 0.45, 0.7, 0.9][round - 1];
-  if (Math.random() < doubleChance) {
-    // Cover the lane you're in too, but always leave one lane open.
-    if (predicted !== from) targets.add(from);
-    else targets.add(from === 1 ? (Math.random() < .5 ? 0 : 2) : 1);
-  }
-  const warn = Math.max(0.55, 1.05 - 0.1 * round);
-  g.slams.push({ lanes: [...targets], from, t: 0, warn, hit: false });
-  g.slamTimer = Math.max(1.9, 4.4 - 0.45 * round) + Math.random() * 1.2;
-}
-
-function spawnRow() {
-  const z = ZMAX;
-  const adapt = Math.random() < skill();
-  const here = g.lane;
-
-  // Trap 1: you always dodge the same way out of the middle lane.
-  const dodges = mem.dodge.L + mem.dodge.R;
-  if (adapt && here === 1 && dodges >= 3 && mem.dodge.L !== mem.dodge.R) {
-    const pref = mem.dodge.L > mem.dodge.R ? 0 : 2;
-    add(1, z, pick(["block", "block", "low", "high"]));
-    add(pref, z + 5, "block");
-    return;
-  }
-  // Trap 2: you always jump barriers, so something waits where you land.
-  if (adapt && mem.lowJump >= 3 && mem.lowJump > mem.lowDodge + 1 && Math.random() < .5) {
-    add(here, z, "low");
-    add(here, z + 12, "high");
-    return;
-  }
-  // Trap 3: you always slide, so a barrier follows the bar.
-  if (adapt && mem.highSlide >= 3 && mem.highSlide > mem.highDodge + 1 && Math.random() < .5) {
-    add(here, z, "high");
-    add(here, z + 11, "low");
-    return;
-  }
-  // Regular row: one lane is always fully open.
-  const free = Math.floor(Math.random() * LANES);
-  let placed = 0;
-  for (let l = 0; l < LANES; l++) {
-    if (l === free) continue;
-    if (Math.random() < 0.65) { add(l, z, randomType()); placed++; }
-  }
-  if (!placed) add((free + 1) % LANES, z, randomType());
-
-  function add(lane, z, type) { g.obstacles.push({ lane, z, type, done: false }); }
-}
-function randomType() { return pick(round < 2 ? ["low", "high", "block", "block"] : ["low", "high", "block"]); }
-function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
-
-/* ---------- update ---------- */
+/* ---------- loop ---------- */
 
 let last = performance.now();
 function frame(now) {
-  const dt = Math.min(0.05, (now - last) / 1000);
+  const dt = Math.min(0.033, (now - last) / 1000);
   last = now;
   if (mode === "run") update(dt);
-  else if (g && mode === "caughtAnim") { g.caughtAnim += dt; tickParticles(dt); if (g.caughtAnim > 1.1) showCaught(); }
-  draw(dt);
+  else if (mode === "caughtAnim") { g.deathAnim += dt; tickParticles(dt); if (g.deathAnim > 1) showCaught(); }
+  draw();
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
 
+function overlaps(a, r) { return a.x < r[0] + r[2] && a.x + a.w > r[0] && a.y < r[1] + r[3] && a.y + a.h > r[1]; }
+function hitsSolid(box) { return SOLIDS.some(r => overlaps(box, r)); }
+
 function update(dt) {
   g.t += dt;
-  const step = g.speed * dt;
-  g.travel += step;
-  g.px += (g.lane - g.px) * Math.min(1, dt * 14);
-  mem.laneTime[g.lane] += dt;
+  const p = g.p;
+  const dir = (keys.right ? 1 : 0) - (keys.left ? 1 : 0);
+  if (dir) p.facing = dir;
+  jumpBuffer -= dt;
 
-  // jump / slide
-  if (g.jumpY > 0) {
-    g.vy -= 30 * dt; g.jumpY += g.vy * dt;
-    if (g.jumpY <= 0) { g.jumpY = 0; g.vy = 0; dust(6); }
+  // slide
+  if (keys.down && p.onGround && p.slideT <= 0 && (Math.abs(p.vx) > 120 || dir)) {
+    p.slideT = 0.55; p.y += 28; p.h = 28; p.vx = (Math.sign(p.vx) || p.facing) * 470; dust(p.x + p.w / 2, p.y + p.h, 8);
   }
-  if (g.slideT > 0) g.slideT -= dt;
-  if (g.invuln > 0) g.invuln -= dt;
-
-  // spawning (stop shortly before the finish line)
-  g.sinceRow += step;
-  if (g.sinceRow >= g.rowGap && g.travel < g.trackLen - ZMAX - 10) { g.sinceRow = 0; spawnRow(); }
-
-  // obstacles
-  const pl = Math.round(g.px);
-  for (const o of g.obstacles) {
-    const prev = o.z;
-    o.z -= step;
-    if (!o.done && prev > 0 && o.z <= 0) {
-      o.done = true;
-      if (o.lane !== pl || g.invuln > 0) continue;
-      const safe = (o.type === "low" && g.jumpY > 0.45) || (o.type === "high" && g.slideT > 0);
-      if (!safe) stumble(40, o.type === "block" ? "SMASHED INTO A TRAIN" : "TRIPPED");
+  if (p.slideT > 0) {
+    p.slideT -= dt;
+    p.vx *= 1 - dt * 0.8;
+    if (p.slideT <= 0) {
+      const stand = { x: p.x, y: p.y - 28, w: p.w, h: 56 };
+      if (hitsSolid(stand)) p.slideT = 0.05;         // can't stand up under a ceiling yet
+      else { p.y -= 28; p.h = 56; }
     }
+  } else {
+    const target = dir * 340, accel = p.onGround ? 2600 : 1500;
+    if (p.vx < target) p.vx = Math.min(target, p.vx + accel * dt);
+    else if (p.vx > target) p.vx = Math.max(target, p.vx - accel * dt);
   }
-  g.obstacles = g.obstacles.filter(o => o.z > -4);
 
-  // slams
-  if (g.travel < g.trackLen - 20) {
-    g.slamTimer -= dt;
-    if (g.slamTimer <= 0) startSlam();
+  // jump / wall-jump
+  p.coyote = p.onGround ? 0.09 : p.coyote - dt;
+  if (jumpBuffer > 0 && p.slideT <= 0) {
+    if (p.coyote > 0) { p.vy = -900; p.coyote = 0; jumpBuffer = 0; dust(p.x + p.w / 2, p.y + p.h, 5); }
+    else if (p.wall) { p.vy = -820; p.vx = -p.wall * 400; p.facing = -p.wall; jumpBuffer = 0; dust(p.x + (p.wall > 0 ? p.w : 0), p.y + p.h / 2, 6); }
   }
-  for (const s of g.slams) {
-    s.t += dt;
-    if (!s.hit && s.t >= s.warn) {
-      s.hit = true;
-      g.shake = Math.max(g.shake, 0.25);
-      mem.slam[s.from][g.lane]++;
-      if (s.lanes.includes(Math.round(g.px)) && g.invuln <= 0) stumble(60, "CLAWED");
-      else sparks(s.lanes);
-    }
-  }
-  g.slams = g.slams.filter(s => s.t < s.warn + 0.35);
+  if (!keys.jump && p.vy < -300) p.vy += 2600 * dt;  // short hop when you let go early
+  p.vy += 2000 * dt;
+  if (p.wall && !p.onGround && p.vy > 200) p.vy = 200;   // wall slide
 
-  // the Mimic closes in after mistakes, falls back when you run clean
-  g.gap = Math.min(100, g.gap + 5 * dt);
-  if (g.lunge > 0) g.lunge -= dt;
+  // move + collide
+  p.x += p.vx * dt;
+  for (const r of SOLIDS) if (overlaps(p, r)) {
+    if (p.vx > 0) p.x = r[0] - p.w; else if (p.vx < 0) p.x = r[0] + r[2];
+    p.vx = 0;
+  }
+  p.x = Math.max(0, Math.min(WORLD_W - p.w, p.x));
+  const wasGround = p.onGround;
+  p.y += p.vy * dt;
+  p.onGround = false;
+  for (const r of SOLIDS) if (overlaps(p, r)) {
+    if (p.vy > 0) { p.y = r[1] - p.h; p.onGround = true; }
+    else if (p.vy < 0) p.y = r[1] + r[3];
+    p.vy = 0;
+  }
+  if (p.onGround && !wasGround) dust(p.x + p.w / 2, p.y + p.h, 6);
+  p.wall = 0;
+  if (!p.onGround) {
+    if (dir > 0 && hitsSolid({ x: p.x + 2, y: p.y + 4, w: p.w, h: p.h - 8 })) p.wall = 1;
+    if (dir < 0 && hitsSolid({ x: p.x - 2, y: p.y + 4, w: p.w, h: p.h - 8 })) p.wall = -1;
+  }
+  p.anim += Math.abs(p.vx) * dt * 0.05;
+
+  // checkpoints and falling
+  CHECKPOINTS.forEach((x, i) => { if (p.x > x) g.checkpoint = Math.max(g.checkpoint, i); });
+  if (p.y > FALL_Y) {
+    const cx = CHECKPOINTS[g.checkpoint];
+    Object.assign(p, { x: cx, y: 200, vx: 0, vy: 0, slideT: 0, h: 56 });
+    toast("FELL");
+    g.shake = 0.3;
+  }
+
+  // the Mimic notices when you stand still
+  if (p.onGround && Math.abs(p.vx) < 30 && p.x > 200) {
+    p.still += dt;
+    if (p.still > 0.7 && !p.stopLogged) { p.stopLogged = true; mem.stops.push(Math.round(p.x)); if (mem.stops.length > 40) mem.stops.shift(); }
+  } else { p.still = 0; p.stopLogged = false; }
+
+  // route tracking
+  for (const [sec, def] of Object.entries(SECTIONS)) {
+    const rt = g.routeTime[sec];
+    if (rt.done) continue;
+    if (p.x > def.from && p.x < def.to) rt[def.upper(p.y + p.h) ? "u" : "l"] += dt;
+    if (p.x >= def.to && rt.u + rt.l > 0.3) { rt.done = true; mem.routes[sec][rt.u > rt.l ? "u" : "l"]++; }
+  }
+
+  updateMimic(dt);
+
+  // camera
+  const viewW = W / scale, viewH = H / scale;
+  g.camX += (Math.max(0, Math.min(WORLD_W - viewW, p.x - viewW * 0.35)) - g.camX) * Math.min(1, dt * 6);
+  const ty = viewH >= WORLD_H ? (WORLD_H - viewH) / 2 : Math.max(0, Math.min(WORLD_H - viewH, p.y - viewH * 0.55));
+  g.camY += (ty - g.camY) * Math.min(1, dt * 5);
   if (g.shake > 0) g.shake -= dt;
-  if (g.flash > 0) g.flash -= dt;
 
   tickParticles(dt);
-  if (Math.random() < dt * 14 && g.jumpY === 0) dust(1);
-
-  if (g.gap <= 0) { mode = "caughtAnim"; g.caughtAnim = 0; mem.caught++; saveMemory(); }
-  else if (g.travel >= g.trackLen) finishRound();
-
+  if (p.x >= FINISH_X) finishRound();
   updateHud();
 }
 
-function stumble(amount, why) {
-  g.gap -= amount;
-  g.invuln = 0.7;
-  g.shake = 0.4; g.flash = 0.3; g.lunge = 0.5;
-  toast(why);
-  navigator.vibrate && navigator.vibrate(80);
+function updateMimic(dt) {
+  const p = g.p, m = g.m;
+  const pcx = p.x + p.w / 2, pcy = p.y + p.h / 2;
+  for (const s of g.spots) {
+    if (s.shake > 0) s.shake -= dt;
+    s.eyes -= dt;
+    if (s.eyes < 0) s.eyes = 3 + Math.random() * 6;
+  }
+  if (m.state === "hidden") {
+    for (const s of g.spots) {
+      if (!s.armed) continue;
+      const d = Math.hypot(s.x - pcx, s.y - 40 - pcy);
+      if (d < 210) {
+        s.armed = false; s.shake = 0.45;
+        Object.assign(m, { state: "emerge", x: s.x, y: s.y - 40, t: 0, spot: s });
+        mem.ambushes++;
+        break;
+      }
+    }
+  } else if (m.state === "emerge") {
+    m.t += dt;
+    if (m.t > 0.45) {
+      m.state = "chase"; m.t = 0;
+      g.shake = 0.35; toast(pick(["FOUND YOU", "THERE YOU ARE", "BOO", "PEEKABOO"]));
+      burst(m.x, m.y);
+      navigator.vibrate && navigator.vibrate(90);
+    }
+  } else if (m.state === "chase") {
+    m.t += dt;
+    const speed = 230 + 15 * round + Math.min(40, m.t * 6);  // you run at 340; sliding is faster
+    const dx = pcx - m.x, dy = pcy - m.y, d = Math.hypot(dx, dy);
+    m.x += dx / d * speed * dt; m.y += dy / d * speed * dt;
+    if (Math.random() < dt * 30) g.particles.push({ x: m.x + (Math.random() - .5) * 30, y: m.y + (Math.random() - .5) * 30, vx: 0, vy: -20, life: .6, max: .6, c: "20,8,30", r: 6 + Math.random() * 8 });
+    if (d < 34) caught();
+    else if (d > 620 || m.t > 7) { toast("IT HID AGAIN"); burst(m.x, m.y); rehide(); }
+  }
+}
+
+function caught() {
+  mode = "caughtAnim"; g.deathAnim = 0; g.shake = 0.6;
+  mem.caught++; mem.caughtAt.push(Math.round(g.p.x)); if (mem.caughtAt.length > 10) mem.caughtAt.shift();
+  saveMemory();
+  burst(g.p.x, g.p.y);
 }
 
 /* ---------- particles ---------- */
 
-function dust(n) {
-  const p = proj(0, g.px - 1);
-  for (let i = 0; i < n; i++) g.particles.push({ x: p.x + (Math.random() - .5) * 20, y: p.y, vx: (Math.random() - .5) * 60, vy: -Math.random() * 40, life: .5, max: .5, c: "180,170,210", r: 2 + Math.random() * 3 });
+function dust(x, y, n) {
+  for (let i = 0; i < n; i++) g.particles.push({ x, y, vx: (Math.random() - .5) * 120, vy: -Math.random() * 60, life: .45, max: .45, c: "190,180,215", r: 2 + Math.random() * 3 });
 }
-function sparks(lanes) {
-  for (const l of lanes) {
-    const p = proj(0, l - 1);
-    for (let i = 0; i < 14; i++) g.particles.push({ x: p.x, y: p.y, vx: (Math.random() - .5) * 320, vy: -Math.random() * 260, life: .6, max: .6, c: "255,120,90", r: 2 + Math.random() * 2, grav: 600 });
-  }
+function burst(x, y) {
+  for (let i = 0; i < 26; i++) { const a = Math.random() * 7, v = 100 + Math.random() * 260; g.particles.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: .7, max: .7, c: pick(["20,8,30", "255,59,92"]), r: 3 + Math.random() * 6 }); }
 }
 function confetti() {
-  for (let i = 0; i < 120; i++) g.particles.push({ x: W / 2 + (Math.random() - .5) * W * .6, y: H * .35, vx: (Math.random() - .5) * 500, vy: -Math.random() * 500, life: 1.6, max: 1.6, c: pick(["255,210,63", "92,225,230", "255,59,92", "190,140,255"]), r: 3 + Math.random() * 3, grav: 500 });
+  for (let i = 0; i < 120; i++) g.particles.push({ x: FINISH_X + (Math.random() - .5) * 200, y: 300, vx: (Math.random() - .5) * 600, vy: -Math.random() * 600, life: 1.6, max: 1.6, c: pick(["255,210,63", "92,225,230", "255,59,92", "190,140,255"]), r: 3 + Math.random() * 4, grav: 900 });
 }
 function tickParticles(dt) {
-  for (const p of g.particles) { p.life -= dt; p.x += p.vx * dt; p.y += p.vy * dt; if (p.grav) p.vy += p.grav * dt; }
-  g.particles = g.particles.filter(p => p.life > 0);
+  for (const q of g.particles) { q.life -= dt; q.x += q.vx * dt; q.y += q.vy * dt; if (q.grav) q.vy += q.grav * dt; }
+  g.particles = g.particles.filter(q => q.life > 0);
 }
 
 /* ---------- drawing ---------- */
 
-function draw(dt) {
-  ctx.save();
-  ctx.clearRect(0, 0, W, H);
-  if (g && g.shake > 0) ctx.translate((Math.random() - .5) * 14 * g.shake / .4, (Math.random() - .5) * 14 * g.shake / .4);
+const SKYLINE = Array.from({ length: 60 }, (_, i) => ({ x: i * 90 + Math.random() * 40, w: 60 + Math.random() * 70, h: 120 + Math.random() * 300 }));
 
-  const travel = g ? g.travel : performance.now() / 1000 * 8;
-  drawTunnel(travel);
-  if (g) {
-    drawFinish();
-    const objs = g.obstacles.filter(o => o.z < ZMAX && o.z > -2).sort((a, b) => b.z - a.z);
-    for (const o of objs) if (o.z > 0) drawObstacle(o);
-    drawSlamShadows();
-    drawPlayer();
-    for (const o of objs) if (o.z <= 0) drawObstacle(o);
-    drawClaws();
-    for (const p of g.particles) {
-      ctx.globalAlpha = Math.max(0, p.life / p.max);
-      ctx.fillStyle = `rgb(${p.c})`;
-      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill();
-    }
-    ctx.globalAlpha = 1;
-    drawMonster(dt);
-    if (g.flash > 0) { ctx.fillStyle = `rgba(255,40,70,${g.flash})`; ctx.fillRect(-20, -20, W + 40, H + 40); }
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  const sky = ctx.createLinearGradient(0, 0, 0, H);
+  sky.addColorStop(0, "#0d0820"); sky.addColorStop(.7, "#2a1240"); sky.addColorStop(1, "#3a1630");
+  ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
+  // moon
+  ctx.fillStyle = "rgba(255,240,210,.9)"; ctx.beginPath(); ctx.arc(W * .8, H * .16, 34, 0, 7); ctx.fill();
+  ctx.fillStyle = "rgba(255,240,210,.12)"; ctx.beginPath(); ctx.arc(W * .8, H * .16, 70, 0, 7); ctx.fill();
+  if (!g) { drawSkyline(performance.now() / 30); return; }
+
+  drawSkyline(g.camX);
+  ctx.save();
+  if (g.shake > 0) ctx.translate((Math.random() - .5) * 18 * g.shake, (Math.random() - .5) * 18 * g.shake);
+  ctx.scale(scale, scale);
+  ctx.translate(-g.camX, -g.camY);
+
+  drawFinish();
+  for (const s of g.spots) drawSpot(s);
+  for (const r of SOLIDS) drawSolid(r);
+  drawPlayer();
+  drawMimic();
+  for (const q of g.particles) {
+    ctx.globalAlpha = Math.max(0, q.life / q.max);
+    ctx.fillStyle = `rgb(${q.c})`; ctx.beginPath(); ctx.arc(q.x, q.y, q.r, 0, 7); ctx.fill();
   }
+  ctx.globalAlpha = 1;
   ctx.restore();
+
+  // red vignette while it's hunting you
+  const hunting = g.m.state === "chase" || mode === "caughtAnim";
+  if (hunting) {
+    const k = mode === "caughtAnim" ? Math.min(1, g.deathAnim * 1.5) : 0.35 + 0.15 * Math.sin(g.t * 10);
+    const v = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * .25, W / 2, H / 2, Math.max(W, H) * .75);
+    v.addColorStop(0, "rgba(120,0,20,0)"); v.addColorStop(1, `rgba(150,0,30,${k})`);
+    ctx.fillStyle = v; ctx.fillRect(0, 0, W, H);
+  }
 }
 
-function drawTunnel(travel) {
-  // sky/void at the tunnel's far end
-  const hy = H * 0.3;
-  const bg = ctx.createLinearGradient(0, 0, 0, H);
-  bg.addColorStop(0, "#0b0618"); bg.addColorStop(.3, "#1a0d2e"); bg.addColorStop(1, "#05030a");
-  ctx.fillStyle = bg; ctx.fillRect(-20, -20, W + 40, H + 40);
-  const far = proj(ZMAX, 0);
-  const hole = ctx.createRadialGradient(far.x, hy, 0, far.x, hy, 120);
-  hole.addColorStop(0, "rgba(120,80,200,.35)"); hole.addColorStop(1, "rgba(120,80,200,0)");
-  ctx.fillStyle = hole; ctx.fillRect(far.x - 120, hy - 120, 240, 240);
-
-  // walls
-  for (const side of [-1, 1]) {
-    const a = proj(ZMAX, side * 1.55), b = proj(-4, side * 1.55);
-    const ta = proj(ZMAX, side * 2.4), tb = proj(-1, side * 2.4);
-    ctx.fillStyle = "#140c22";
-    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.lineTo(side < 0 ? -20 : W + 20, b.y); ctx.lineTo(side < 0 ? -20 : W + 20, -20); ctx.lineTo(ta.x, a.y - (a.y - hy) * 0 - 80 * a.s); ctx.closePath(); ctx.fill();
-    // moving wall lights
-    for (let k = 0; k < 18; k++) {
-      const z = k * 6 - (travel % 6);
-      if (z < -1 || z > ZMAX) continue;
-      const p = proj(z, side * 1.75);
-      const h = 120 * p.s, w = 10 * p.s;
-      ctx.fillStyle = `rgba(255,200,120,${0.25 + 0.5 * p.s})`;
-      ctx.fillRect(p.x - w / 2, p.y - h - 30 * p.s, w, h * .25);
+function drawSkyline(camX) {
+  for (const [layer, color, speed, base] of [[0, "#1a0f2c", .15, .62], [1, "#140b22", .35, .7]]) {
+    ctx.fillStyle = color;
+    for (const b of SKYLINE) {
+      const span = 60 * 90;
+      let x = ((b.x + layer * 45 - camX * speed) % span + span) % span - 100;
+      const h = b.h * (layer ? .8 : 1) * (H / 800);
+      ctx.fillRect(x, H * base - h + 80, b.w, h + H);
+      if (layer === 0 && (b.x | 0) % 3 === 0) { ctx.fillStyle = "rgba(255,210,120,.25)"; ctx.fillRect(x + 12, H * base - h + 110, 6, 8); ctx.fillStyle = color; }
     }
   }
+}
 
-  // track bed
-  const l0 = proj(ZMAX, -1.55), r0 = proj(ZMAX, 1.55), l1 = proj(-4, -1.55), r1 = proj(-4, 1.55);
-  ctx.fillStyle = "#231733";
-  ctx.beginPath(); ctx.moveTo(l0.x, l0.y); ctx.lineTo(r0.x, r0.y); ctx.lineTo(r1.x, r1.y); ctx.lineTo(l1.x, l1.y); ctx.closePath(); ctx.fill();
-  // sleepers
-  for (let k = 0; k < 40; k++) {
-    const z = k * 2.2 - (travel % 2.2);
-    if (z < -1 || z > ZMAX) continue;
-    const a = proj(z, -1.5), b = proj(z, 1.5);
-    ctx.strokeStyle = `rgba(90,70,110,${0.3 + 0.5 * a.s})`;
-    ctx.lineWidth = Math.max(1, 6 * a.s);
-    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+function drawSolid([x, y, w, h]) {
+  ctx.fillStyle = "#24173a"; ctx.fillRect(x, y, w, h);
+  ctx.fillStyle = "#3b2a58"; ctx.fillRect(x, y, w, 6);
+  // windows on big blocks
+  if (h > 100 && w > 100) {
+    for (let wx = x + 20; wx < x + w - 20; wx += 46) for (let wy = y + 30; wy < Math.min(y + h, 800) - 20; wy += 54) {
+      const lit = ((wx * 7 + wy * 13) | 0) % 5 === 0;
+      ctx.fillStyle = lit ? "rgba(255,210,120,.5)" : "rgba(10,6,20,.6)";
+      ctx.fillRect(wx, wy, 18, 24);
+    }
   }
-  // rails
-  for (const lf of [-1.35, -0.65, -0.35, 0.35, 0.65, 1.35]) {
-    const a = proj(ZMAX, lf), b = proj(-4, lf);
-    ctx.strokeStyle = "rgba(190,180,220,.45)"; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+}
+
+function drawSpot(s) {
+  const sx = s.shake > 0 ? Math.sin(g.t * 80) * 5 : 0;
+  ctx.save(); ctx.translate(s.x + sx, s.y);
+  let eyeY = -40;
+  switch (s.kind) {
+    case "chimney": ctx.fillStyle = "#6b2f2f"; ctx.fillRect(-26, -90, 52, 90); ctx.fillStyle = "#4a1f1f"; ctx.fillRect(-32, -98, 64, 12); eyeY = -60; break;
+    case "vent": ctx.fillStyle = "#5c6278"; ctx.fillRect(-36, -50, 72, 50); ctx.fillStyle = "#2b2e3d"; for (let i = 0; i < 4; i++) ctx.fillRect(-28, -42 + i * 10, 56, 4); eyeY = -26; break;
+    case "tank": ctx.fillStyle = "#4b3a2c"; ctx.fillRect(-30, -40, 6, 40); ctx.fillRect(24, -40, 6, 40); ctx.fillStyle = "#7a5a3c"; ctx.fillRect(-40, -120, 80, 80); ctx.beginPath(); ctx.moveTo(-44, -120); ctx.lineTo(0, -150); ctx.lineTo(44, -120); ctx.fill(); eyeY = -80; break;
+    case "billboard": ctx.fillStyle = "#333"; ctx.fillRect(-4, -60, 8, 60); ctx.fillStyle = "#c9b8ff"; ctx.fillRect(-70, -140, 140, 80); ctx.fillStyle = "#1a1030"; ctx.font = "bold 18px Bungee, sans-serif"; ctx.textAlign = "center"; ctx.fillText("SMILE :)", 0, -94); eyeY = -50; break;
+    case "dumpster": ctx.fillStyle = "#2f6b44"; ctx.fillRect(-46, -52, 92, 52); ctx.fillStyle = "#245236"; ctx.fillRect(-50, -60, 100, 10); eyeY = -54; break;
+    case "door": ctx.fillStyle = "#3d2a1e"; ctx.fillRect(-26, -80, 52, 80); ctx.fillStyle = "#0a0508"; ctx.fillRect(-26, -80, 14, 80); eyeY = -56; break;
   }
+  // eyes peek out of random spots, real or not; it hides everywhere
+  if (s.eyes < 0.9 || s.shake > 0) {
+    const open = s.shake > 0 ? 1 : Math.sin(Math.min(1, s.eyes / 0.9) * Math.PI);
+    ctx.fillStyle = "#ff3b5c"; ctx.shadowColor = "#ff3b5c"; ctx.shadowBlur = 12;
+    const ex = s.kind === "door" ? -19 : 0;
+    for (const o of [-8, 8]) { ctx.beginPath(); ctx.ellipse(ex + o, eyeY, 4, 3 * open + .3, 0, 0, 7); ctx.fill(); }
+    ctx.shadowBlur = 0;
+  }
+  ctx.restore();
 }
 
 function drawFinish() {
-  const z = g.trackLen - g.travel;
-  if (z > ZMAX || z < -1) return;
-  const cells = 10, rows = 2;
-  for (let r = 0; r < rows; r++) for (let c = 0; c < cells; c++) {
-    const z0 = z + r * 0.6, z1 = z0 + 0.6;
-    const lf0 = -1.5 + c * 3 / cells, lf1 = lf0 + 3 / cells;
-    const a = proj(z0, lf0), b = proj(z0, lf1), d = proj(z1, lf1), e = proj(z1, lf0);
+  const x = FINISH_X, y = 480;
+  ctx.fillStyle = "#ddd"; ctx.fillRect(x, y - 150, 6, 150);
+  const wave = Math.sin(g.t * 6) * 6;
+  for (let r = 0; r < 4; r++) for (let c = 0; c < 6; c++) {
     ctx.fillStyle = (r + c) % 2 ? "#fff" : "#111";
-    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.lineTo(d.x, d.y); ctx.lineTo(e.x, e.y); ctx.closePath(); ctx.fill();
+    ctx.fillRect(x + 6 + c * 12, y - 150 + r * 12 + wave * (c / 6), 12, 12);
   }
-  const p = proj(z, 0), lw = laneWidth() * p.s;
-  ctx.fillStyle = "#ffd23f";
-  ctx.font = `${Math.max(10, 34 * p.s)}px Bungee, sans-serif`;
-  ctx.textAlign = "center";
-  ctx.fillText("FINISH", p.x, p.y - lw * 1.9);
-}
-
-function drawObstacle(o) {
-  const p = proj(o.z, o.lane - 1);
-  const lw = laneWidth() * p.s, w = lw * 0.82;
-  ctx.globalAlpha = Math.min(1, (ZMAX - o.z) / 10);
-  if (o.type === "low") {
-    const h = lw * 0.35;
-    ctx.fillStyle = "#ff8a3b"; ctx.fillRect(p.x - w / 2, p.y - h, w, h);
-    ctx.fillStyle = "#fff";
-    for (let i = 0; i < 4; i++) ctx.fillRect(p.x - w / 2 + i * w / 4 + w / 16, p.y - h, w / 10, h);
-  } else if (o.type === "high") {
-    const top = p.y - lw * 1.15, bh = lw * 0.28;
-    ctx.fillStyle = "#555";
-    ctx.fillRect(p.x - w / 2, top, lw * .07, p.y - top); ctx.fillRect(p.x + w / 2 - lw * .07, top, lw * .07, p.y - top);
-    ctx.fillStyle = "#ffd23f"; ctx.fillRect(p.x - w / 2, top, w, bh);
-    ctx.fillStyle = "#111";
-    for (let i = 0; i < 5; i++) ctx.fillRect(p.x - w / 2 + i * w / 5, top, w / 10, bh);
-  } else {
-    const h = lw * 1.7;
-    ctx.fillStyle = "#b8213f"; roundRect(p.x - w / 2, p.y - h, w, h, 8 * p.s); ctx.fill();
-    ctx.fillStyle = "#e9e0ff";
-    roundRect(p.x - w * .36, p.y - h * .85, w * .72, h * .3, 6 * p.s); ctx.fill();
-    ctx.fillStyle = "#fff6b0";
-    ctx.beginPath(); ctx.arc(p.x - w * .28, p.y - h * .2, lw * .07, 0, 7); ctx.arc(p.x + w * .28, p.y - h * .2, lw * .07, 0, 7); ctx.fill();
-  }
-  ctx.globalAlpha = 1;
+  ctx.fillStyle = "#ffd23f"; ctx.font = "22px Bungee, sans-serif"; ctx.textAlign = "center";
+  ctx.fillText("FINISH", x + 40, y - 170);
 }
 
 function drawPlayer() {
-  const p = proj(0, g.px - 1);
-  const lw = laneWidth();
-  const run = g.t * 14;
-  const lift = g.jumpY * lw * 0.75;
-  const sliding = g.slideT > 0;
-  const blink = g.invuln > 0 && Math.floor(g.t * 20) % 2;
-  if (blink) ctx.globalAlpha = .45;
-  // shadow
-  ctx.fillStyle = "rgba(0,0,0,.4)";
-  ctx.beginPath(); ctx.ellipse(p.x, p.y, lw * .22, lw * .06, 0, 0, 7); ctx.fill();
+  const p = g.p;
+  if (mode === "caughtAnim") ctx.globalAlpha = Math.max(0, 1 - g.deathAnim * 1.5);
   ctx.save();
-  ctx.translate(p.x, p.y - lift);
-  const s = lw / 190;
-  if (sliding) { ctx.rotate(-1.1); ctx.translate(-10 * s, -10 * s); }
-  // legs
-  ctx.strokeStyle = "#2b2d6b"; ctx.lineWidth = 12 * s; ctx.lineCap = "round";
-  const sw = g.jumpY > 0 ? 0.6 : Math.sin(run);
-  ctx.beginPath(); ctx.moveTo(-6 * s, -48 * s); ctx.lineTo(-6 * s + sw * 16 * s, -6 * s); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(6 * s, -48 * s); ctx.lineTo(6 * s - sw * 16 * s, -6 * s); ctx.stroke();
-  // body (seen from behind)
-  ctx.fillStyle = "#5ce1e6"; roundRect(-22 * s, -100 * s, 44 * s, 58 * s, 14 * s); ctx.fill();
-  ctx.fillStyle = "#ffd23f"; roundRect(-16 * s, -92 * s, 32 * s, 30 * s, 8 * s); ctx.fill(); // backpack
-  // arms
-  ctx.strokeStyle = "#5ce1e6"; ctx.lineWidth = 10 * s;
-  ctx.beginPath(); ctx.moveTo(-22 * s, -88 * s); ctx.lineTo(-30 * s, -64 * s - sw * 10 * s); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(22 * s, -88 * s); ctx.lineTo(30 * s, -64 * s + sw * 10 * s); ctx.stroke();
-  // head + cap
-  ctx.fillStyle = "#f2c29b"; ctx.beginPath(); ctx.arc(0, -118 * s, 18 * s, 0, 7); ctx.fill();
-  ctx.fillStyle = "#ff3b5c"; ctx.beginPath(); ctx.arc(0, -122 * s, 19 * s, Math.PI, 0); ctx.fill();
+  ctx.translate(p.x + p.w / 2, p.y + p.h);
+  ctx.scale(p.facing, 1);
+  ctx.strokeStyle = "#5ce1e6"; ctx.lineWidth = 6; ctx.lineCap = "round"; ctx.lineJoin = "round";
+  const line = pts => { ctx.beginPath(); ctx.moveTo(pts[0], pts[1]); for (let i = 2; i < pts.length; i += 2) ctx.lineTo(pts[i], pts[i + 1]); ctx.stroke(); };
+  let head;
+  if (p.slideT > 0) {
+    line([-18, -4, 0, -10, 16, -22]);             // body leaning back
+    line([0, -10, 18, -2]); line([0, -10, 22, -6]); // legs forward
+    line([10, -18, -6, -26]);                      // arm
+    head = [22, -30];
+  } else if (p.wall && !p.onGround) {
+    line([6, -16, 4, -40]); line([6, -16, 12, -4]); line([6, -16, 0, -2]);
+    line([4, -36, 12, -48]); line([4, -36, 12, -30]);
+    head = [2, -50];
+  } else if (!p.onGround) {
+    const tuck = Math.max(0, Math.min(1, (p.vy + 400) / 800));
+    line([0, -20, 2, -42]);
+    line([0, -20, 12, -14 + tuck * 6, 4, -2 + tuck * 4]); line([0, -20, -8, -10, -14, -4 + tuck * 2]);
+    line([2, -38, 14, -50]); line([2, -38, -12, -46]);
+    head = [4, -52];
+  } else {
+    const s = Math.sin(p.anim * 6), moving = Math.abs(p.vx) > 20 ? 1 : 0;
+    const lean = moving * 6;
+    line([0, -22, lean, -44]);
+    line([0, -22, 10 * s * moving, -12, 14 * s * moving, 0]); line([0, -22, -10 * s * moving, -12, -14 * s * moving, 0]);
+    line([lean, -40, lean + 12 * -s * moving, -28]); line([lean, -40, lean - 12 * -s * moving, -28]);
+    head = [lean + 2, -54];
+  }
+  ctx.fillStyle = "#f2c29b"; ctx.beginPath(); ctx.arc(head[0], head[1], 9, 0, 7); ctx.fill();
+  ctx.fillStyle = "#ff3b5c"; ctx.fillRect(head[0] - 9, head[1] - 4, 18, 5);  // headband
   ctx.restore();
   ctx.globalAlpha = 1;
 }
 
-function drawSlamShadows() {
-  for (const s of g.slams) {
-    const k = Math.min(1, s.t / s.warn);
-    for (const l of s.lanes) {
-      const p = proj(0, l - 1), lw = laneWidth();
-      const pulse = 0.5 + 0.5 * Math.sin(s.t * 30);
-      ctx.fillStyle = `rgba(255,40,70,${s.hit ? 0.5 : 0.2 + 0.35 * k * pulse})`;
-      ctx.beginPath(); ctx.ellipse(p.x, p.y, lw * .45 * (0.4 + .6 * k), lw * .13 * (0.4 + .6 * k), 0, 0, 7); ctx.fill();
-      ctx.strokeStyle = "rgba(255,80,100,.9)"; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.ellipse(p.x, p.y, lw * .45, lw * .13, 0, 0, 7); ctx.stroke();
-    }
+function drawMimic() {
+  const m = g.m;
+  if (m.state === "hidden") return;
+  let k = 1;
+  if (m.state === "emerge") k = Math.min(1, m.t / 0.45);
+  if (mode === "caughtAnim") k = 1 + g.deathAnim * 2.5;
+  const r = 34 * k;
+  ctx.save(); ctx.translate(m.x, m.y);
+  // reaching arms
+  ctx.strokeStyle = "#140818"; ctx.lineWidth = 7 * k; ctx.lineCap = "round";
+  const reach = Math.sin(g.t * 8);
+  const dir = Math.sign(g.p.x - m.x) || 1;
+  for (const side of [-1, 1]) {
+    ctx.beginPath(); ctx.moveTo(0, 0);
+    ctx.quadraticCurveTo(dir * 40 * k, side * 30 * k, dir * (60 + reach * 12) * k, side * (18 + reach * 6) * k);
+    ctx.stroke();
   }
-}
-
-function drawClaws() {
-  for (const s of g.slams) {
-    const k = Math.min(1, s.t / s.warn);
-    for (const l of s.lanes) {
-      const p = proj(0, l - 1), lw = laneWidth();
-      const y = -lw + (p.y - lw * .2 + lw) * Math.pow(k, 5);
-      ctx.save(); ctx.translate(p.x, y);
-      ctx.fillStyle = "#1a0b22";
-      ctx.fillRect(-lw * .12, -H, lw * .24, H);                 // arm
-      ctx.beginPath(); ctx.ellipse(0, 0, lw * .26, lw * .2, 0, 0, 7); ctx.fill();  // hand
-      ctx.strokeStyle = "#e8e0f0"; ctx.lineWidth = lw * .05; ctx.lineCap = "round";
-      for (const dx of [-.2, 0, .2]) { ctx.beginPath(); ctx.moveTo(dx * lw, lw * .1); ctx.lineTo(dx * lw * 1.3, lw * .32); ctx.stroke(); }
-      ctx.restore();
-    }
-  }
-}
-
-function drawMonster(dt) {
-  const target = proj(0, g.px - 1).x;
-  g.monsterX += (target - g.monsterX) * Math.min(1, dt * 3);
-  let close = 1 - g.gap / 100;
-  if (mode === "caughtAnim") close = 1 + g.caughtAnim * 2;
-  if (g.lunge > 0) close += g.lunge * .4;
-  const size = Math.min(W, 520) * (0.55 + close * 0.6);
-  const y = H + size * 0.2 - close * size * 0.5;
-  const breathe = Math.sin(g.t * 3) * 6;
-  ctx.save(); ctx.translate(g.monsterX, y + breathe);
-  // body with jagged top
-  ctx.fillStyle = "#0c0612";
+  // wobbly body
+  ctx.fillStyle = "#0f0614";
   ctx.beginPath();
-  ctx.moveTo(-size * .6, size * .6);
-  for (let i = 0; i <= 12; i++) {
-    const a = Math.PI + (i / 12) * Math.PI;
-    const r = size * (0.5 + (i % 2 ? 0.07 : 0));
-    ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r * .85);
+  for (let i = 0; i <= 20; i++) {
+    const a = i / 20 * Math.PI * 2;
+    const rr = r * (1 + 0.12 * Math.sin(a * 5 + g.t * 9));
+    i ? ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr) : ctx.moveTo(Math.cos(a) * rr, Math.sin(a) * rr);
   }
-  ctx.lineTo(size * .6, size * .6); ctx.closePath(); ctx.fill();
-  // eyes
-  const glow = 0.6 + 0.4 * Math.sin(g.t * 6);
-  ctx.fillStyle = `rgba(255,50,80,${0.7 + 0.3 * glow})`;
-  ctx.shadowColor = "#ff3b5c"; ctx.shadowBlur = 20;
-  for (const ex of [-.17, .17]) { ctx.beginPath(); ctx.ellipse(ex * size, -size * .22, size * .07, size * .035 * (0.4 + close), ex < 0 ? .25 : -.25, 0, 7); ctx.fill(); }
+  ctx.fill();
+  ctx.fillStyle = "#ff3b5c"; ctx.shadowColor = "#ff3b5c"; ctx.shadowBlur = 16;
+  for (const o of [-11, 11]) { ctx.beginPath(); ctx.ellipse(dir * 6 + o * k, -6 * k, 6 * k, 4 * k, o < 0 ? .3 : -.3, 0, 7); ctx.fill(); }
   ctx.shadowBlur = 0;
-  // grin
-  ctx.strokeStyle = "rgba(240,230,250,.8)"; ctx.lineWidth = 3;
-  ctx.beginPath(); ctx.arc(0, -size * .14, size * .22, .2 * Math.PI, .8 * Math.PI); ctx.stroke();
-  for (let i = 0; i < 7; i++) {
-    const a = (.25 + i * .5 / 6) * Math.PI;
-    const x = Math.cos(a) * size * .22, yy = -size * .14 + Math.sin(a) * size * .22;
-    ctx.beginPath(); ctx.moveTo(x, yy - 6); ctx.lineTo(x, yy + 6); ctx.stroke();
-  }
+  ctx.strokeStyle = "rgba(240,230,250,.85)"; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(dir * 6, 4 * k, 14 * k, .15 * Math.PI, .85 * Math.PI); ctx.stroke();
   ctx.restore();
 }
 
-function roundRect(x, y, w, h, r) {
-  ctx.beginPath();
-  ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
-  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
-}
+function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
 
 /* ---------- HUD + screens ---------- */
 
 const $ = id => document.getElementById(id);
 function updateHud() {
   $("roundTag").textContent = `ROUND ${round}/${ROUNDS}`;
-  $("prog").firstElementChild.style.width = Math.min(100, g.travel / g.trackLen * 100) + "%";
-  $("danger").firstElementChild.style.width = (100 - Math.max(0, g.gap)) + "%";
+  $("prog").firstElementChild.style.width = Math.min(100, g.p.x / FINISH_X * 100) + "%";
+  const st = $("status"), hunting = g.m.state !== "hidden";
+  st.textContent = hunting ? "IT'S CHASING YOU" : "IT'S HIDING…";
+  st.classList.toggle("hunt", hunting);
 }
-function toast(text) {
-  const t = $("toast"); t.textContent = text;
-  t.classList.remove("show"); void t.offsetWidth; t.classList.add("show");
-}
+function toast(text) { const t = $("toast"); t.textContent = text; t.classList.remove("show"); void t.offsetWidth; t.classList.add("show"); }
 function show(id) {
   for (const o of ["menu", "between", "caught", "win"]) $(o).hidden = o !== id;
-  $("hud").hidden = !(mode === "run" || mode === "count" || mode === "caughtAnim");
+  const playing = id === null;
+  $("hud").hidden = !playing; $("pad").hidden = !playing;
 }
 
 function startRound() {
   newRound();
-  mode = "count";
-  show(null);
-  updateHud();
-  const lines = ["3", "2", "1", "RUN"];
-  if (round > 1) toast(round === ROUNDS ? "IT KNOWS YOU NOW" : "IT REMEMBERS");
-  lines.forEach((txt, i) => setTimeout(() => {
+  for (const k in keys) keys[k] = false;
+  mode = "count"; show(null); updateHud();
+  if (round > 1) toast(round === ROUNDS ? "IT KNOWS YOUR EVERY MOVE" : "IT FOUND NEW PLACES TO HIDE");
+  ["3", "2", "1", "GO"].forEach((txt, i, a) => setTimeout(() => {
     $("count").innerHTML = `<span>${txt}</span>`;
-    if (i === lines.length - 1) { mode = "run"; last = performance.now(); }
+    if (i === a.length - 1) { mode = "run"; last = performance.now(); }
   }, i * 650));
-  setTimeout(() => { $("count").innerHTML = ""; }, lines.length * 650 + 400);
+  setTimeout(() => { $("count").innerHTML = ""; }, 4 * 650 + 400);
 }
 
 function finishRound() {
-  mode = "between";
-  confetti();
-  saveMemory();
+  mode = "between"; confetti(); saveMemory();
   if (round === ROUNDS) {
-    $("winStats").textContent = `It watched ${observations()} of your moves and caught you ${mem.caught} time${mem.caught === 1 ? "" : "s"} in total.`;
-    setTimeout(() => show("win"), 700);
+    $("winStats").textContent = `It ambushed you ${mem.ambushes} times and caught you ${mem.caught} time${mem.caught === 1 ? "" : "s"} along the way.`;
+    setTimeout(() => show("win"), 800);
     return;
   }
   $("betweenTitle").textContent = `Round ${round} cleared`;
-  $("betweenSub").textContent = pick(["But it was watching.", "It's getting closer to understanding you.", "It noticed something."]);
-  renderDots();
-  renderBrain($("brain"));
+  $("betweenSub").textContent = pick(["But it was watching where you went.", "It's moving to a new hiding spot.", "It noticed something about you."]);
+  renderDots(); renderBrain($("brain"));
   round++;
-  setTimeout(() => show("between"), 700);
+  setTimeout(() => show("between"), 800);
 }
 
 function showCaught() {
   mode = "caught";
-  $("caughtText").textContent = `On round ${round}. It's been learning the whole time. Here's what it knows about you:`;
+  $("caughtText").textContent = `On round ${round}. It's been learning the whole time. Here's what it knows:`;
   renderBrain($("caughtBrain"));
   show("caught");
 }
 
 function renderDots() {
-  $("roundDots").innerHTML = Array.from({ length: ROUNDS }, (_, i) =>
-    `<span class="${i < round ? "done" : i === round ? "now" : ""}"></span>`).join("");
+  $("roundDots").innerHTML = Array.from({ length: ROUNDS }, (_, i) => `<span class="${i < round ? "done" : i === round ? "now" : ""}"></span>`).join("");
 }
 
 function renderBrain(box) {
   const lines = [];
-  // where you run when the claw comes
-  let left = 0, stay = 0, right = 0;
-  mem.slam.forEach((row, from) => row.forEach((n, to) => { if (to < from) left += n; else if (to > from) right += n; else stay += n; }));
-  const slams = left + stay + right;
-  if (slams >= 2) {
-    const most = Math.max(left, stay, right);
-    const word = most === stay ? "stay in your lane" : most === left ? "run LEFT" : "run RIGHT";
-    lines.push(`"When my claw comes down, you ${word} ${most} out of ${slams} times. I'll aim there."`);
+  const names = { B: ["over the big building", "through the alley underneath"], C: ["across the crane girders", "through the corridor below"] };
+  for (const sec of ["B", "C"]) {
+    const r = mem.routes[sec], total = r.u + r.l;
+    if (total >= 1) {
+      const up = r.u >= r.l, n = Math.max(r.u, r.l);
+      lines.push(`"You went ${names[sec][up ? 0 : 1]} ${n} out of ${total} time${total === 1 ? "" : "s"}. I'll be hiding there."`);
+    }
   }
-  const dodges = mem.dodge.L + mem.dodge.R;
-  if (dodges >= 2) {
-    const dir = mem.dodge.L >= mem.dodge.R ? "left" : "right";
-    lines.push(`"When something blocks the middle, you dodge ${dir} ${Math.max(mem.dodge.L, mem.dodge.R)} of ${dodges} times. Something will be waiting on the ${dir}."`);
+  if (mem.stops.length >= 2) {
+    // find the spot nearest to where you most often stop
+    const counts = SPOTS.map(s => mem.stops.filter(x => Math.abs(x - s.x) < 260).length);
+    const best = SPOTS[counts.indexOf(Math.max(...counts))];
+    if (Math.max(...counts) >= 2) lines.push(`"You keep stopping near that ${best.kind}. I like it when you stop."`);
   }
-  if (mem.lowJump + mem.lowDodge >= 2) {
-    lines.push(mem.lowJump >= mem.lowDodge
-      ? `"You love jumping over barriers (${mem.lowJump} times). Have you looked at where you land?"`
-      : `"You run around barriers instead of jumping them. That's ${mem.lowDodge} times you've moved where I expected."`);
-  }
-  if (mem.highSlide + mem.highDodge >= 2 && mem.highSlide > mem.highDodge) {
-    lines.push(`"You always slide under bars (${mem.highSlide} times). Something will be right behind them."`);
-  }
-  const fav = mem.laneTime.indexOf(Math.max(...mem.laneTime));
-  if (mem.laneTime[fav] > 5) lines.push(`"Your favorite lane is the ${["left", "middle", "right"][fav]} one. I like it too."`);
-  if (!lines.length) lines.push(`"Not much yet. Keep running. I'm watching."`);
+  if (mem.caughtAt.length) lines.push(`"I've caught you ${mem.caught} time${mem.caught === 1 ? "" : "s"}. I remember exactly where."`);
+  if (!lines.length) lines.push(`"Not much yet. Keep running. I'm watching from somewhere."`);
   box.innerHTML = lines.map((l, i) => `<div style="animation-delay:${i * 0.25}s">${l}</div>`).join("");
-  $("learnBar").style.width = Math.min(100, observations() * 3) + "%";
 }
 
 $("startBtn").onclick = () => { round = 1; startRound(); };
@@ -769,9 +722,9 @@ $("nextBtn").onclick = startRound;
 $("retryBtn").onclick = () => { round = 1; startRound(); };
 $("againBtn").onclick = () => { round = 1; startRound(); };
 function wipe() { mem = freshMemory(); saveMemory(); toast("IT FORGOT YOU... FOR NOW"); }
-$("wipeBtn").onclick = wipe;
+$("wipeBtn").onclick = () => { wipe(); $("wipeBtn").hidden = true; };
 $("wipeBtn2").onclick = () => { wipe(); round = 1; startRound(); };
-if (observations() > 0) $("wipeBtn").hidden = false;
+if (knowsSomething()) $("wipeBtn").hidden = false;
 show("menu");
 </script>
 </body>
