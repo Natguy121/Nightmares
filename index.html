@@ -1,0 +1,477 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Lantern Road</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #07060a;
+    --ink: #e9e2d0;
+    --muted: #8d8576;
+    --glow: 255, 196, 112;
+    --panel: rgba(20, 17, 14, 0.72);
+    --edge: rgba(233, 226, 208, 0.12);
+    --light: 1;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "IM Fell English", Georgia, serif;
+    overflow-x: hidden;
+  }
+  /* Lantern light that shrinks as the oil runs out */
+  #glow {
+    position: fixed; inset: 0; pointer-events: none;
+    background: radial-gradient(
+      circle at 50% 38%,
+      rgba(var(--glow), calc(0.20 * var(--light))) 0,
+      rgba(var(--glow), calc(0.06 * var(--light))) calc(18% + 30% * var(--light)),
+      transparent calc(30% + 45% * var(--light))
+    );
+    transition: background 1.2s ease;
+    animation: flicker 3.7s infinite;
+  }
+  @keyframes flicker {
+    0%, 100% { opacity: 1; } 42% { opacity: .92; } 44% { opacity: .75; } 46% { opacity: .95; } 80% { opacity: .9; }
+  }
+  main {
+    position: relative;
+    max-width: 640px;
+    margin: 0 auto;
+    min-height: 100%;
+    padding: 48px 16px 64px;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  header.hud {
+    position: fixed; top: 0; left: 0; right: 0;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 16px;
+    font-family: Inter, system-ui, sans-serif; font-size: 12px;
+    letter-spacing: .08em; text-transform: uppercase; color: var(--muted);
+    z-index: 2;
+  }
+  header.hud[hidden] { display: none; }
+  .oil { display: flex; align-items: center; gap: 8px; }
+  .oil-bar { width: 90px; height: 6px; border-radius: 3px; background: var(--edge); overflow: hidden; }
+  .oil-bar > i { display: block; height: 100%; width: 100%; background: rgb(var(--glow)); transition: width 1s ease; }
+  h1 { font-size: clamp(34px, 8vw, 54px); font-weight: 400; margin: 0 0 8px; text-align: center; }
+  .sub { text-align: center; color: var(--muted); font-style: italic; margin: 0 0 32px; }
+  .story { font-size: clamp(19px, 4.6vw, 23px); line-height: 1.5; min-height: 5em; margin: 0 0 28px; }
+  .story .cursor { display: inline-block; width: .5em; animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  .echo { color: var(--muted); font-style: italic; margin: 0 0 18px; min-height: 1.4em; }
+  .choices { display: grid; gap: 10px; }
+  button.choice, button.primary, button.ghost {
+    font: inherit; color: var(--ink); cursor: pointer;
+    border: 1px solid var(--edge); background: var(--panel);
+    padding: 14px 18px; border-radius: 10px; text-align: left; font-size: 18px;
+    transition: border-color .2s, background .2s, transform .1s;
+    opacity: 0; animation: rise .5s ease forwards;
+  }
+  button.choice:hover, button.choice:focus-visible { border-color: rgba(var(--glow), .6); background: rgba(40, 32, 22, .8); outline: none; }
+  button.choice:active { transform: scale(.99); }
+  button.primary { text-align: center; border-color: rgba(var(--glow), .55); }
+  button.ghost { text-align: center; font-size: 15px; font-family: Inter, system-ui, sans-serif; padding: 10px 14px; }
+  @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  .center { text-align: center; }
+  .seed {
+    font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12.5px; line-height: 1.5;
+    white-space: pre-wrap; word-break: break-all;
+    background: #000; border: 1px solid rgba(var(--glow), .35); border-radius: 10px;
+    padding: 14px; margin: 18px 0 12px; max-height: 260px; overflow: auto; color: #f3d9a8;
+  }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+  .hint { font-family: Inter, system-ui, sans-serif; font-size: 13px; color: var(--muted); text-align: center; margin-top: 14px; }
+  .fade { animation: fadein 1s ease; }
+  @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
+</style>
+</head>
+<body>
+<div id="glow"></div>
+<header class="hud" id="hud" hidden>
+  <span id="step"></span>
+  <span class="oil">Oil <span class="oil-bar"><i id="oil"></i></span></span>
+</header>
+<main id="app"></main>
+
+<script>
+/* ---------------------------------------------------------------
+   The Lantern Road
+   On the surface it's a short dream adventure. Under the hood, each
+   choice quietly adds weight to one or more fear categories. At the
+   end the strongest fears become an image prompt ("Dream Seed").
+   Nothing leaves the browser; there is no tracking or network call.
+---------------------------------------------------------------- */
+
+const FEARS = {
+  dark: {
+    title: "The Watchers Beyond the Light",
+    main: "near-total darkness swallows everything; a single dying lantern lights only a few feet, and at the very edge of that light stand tall, thin, faceless figures, perfectly still, watching",
+    minor: "faceless silhouettes standing just past the edge of the light",
+  },
+  chase: {
+    title: "The Thing That Keeps Pace",
+    main: "a path stretches endlessly ahead while behind the viewer, much closer than it should be, a tall shadowed figure is caught mid-stride, slightly motion-blurred, gaining",
+    minor: "a tall shadowed figure far behind, closer than it should be",
+  },
+  water: {
+    title: "The Deep Below You",
+    main: "black, perfectly still water has risen to chest height; below it is impossibly deep, and a huge pale shape is faintly visible beneath the surface directly under the viewer",
+    minor: "black water seeping slowly across the floor",
+  },
+  fall: {
+    title: "The Endless Drop",
+    main: "the viewer stands barefoot on a crumbling ledge above a bottomless drop, the ground far below lost in fog, cracks spreading under their toes, dizzying vertigo perspective",
+    minor: "the floor ending abruptly in a sheer drop into fog",
+  },
+  swarm: {
+    title: "The Crawling Walls",
+    main: "every surface is slowly crawling with thousands of tiny dark insects pouring out of cracks in the walls and ceiling, all moving in a single direction: toward the viewer",
+    minor: "thin trails of tiny insects leaking from the cracks",
+  },
+  alone: {
+    title: "The Last One Left",
+    main: "every other person has vanished; abandoned belongings everywhere, a cup still steaming, a phone still lit with unanswered calls, and one small figure standing alone in a vast silent space",
+    minor: "abandoned belongings, as if everyone vanished mid-step",
+  },
+  trapped: {
+    title: "The Closing Walls",
+    main: "a cramped space with walls pressing inward and the ceiling inches above, a thin sliver of light far away through a gap much too small to fit through",
+    minor: "a ceiling that seems lower than it was a moment ago",
+  },
+  uncanny: {
+    title: "The Ones Who Wear Their Faces",
+    main: "a room full of people who look almost exactly like the viewer's loved ones, but their smiles are slightly too wide and their eyes never blink, all turned toward the camera",
+    minor: "a familiar person in the background whose smile is slightly too wide",
+  },
+  decay: {
+    title: "The Reflection That Crumbles",
+    main: "a tall mirror shows the viewer's reflection rapidly aging and cracking like old paper while the reflection calmly smiles, pieces of it drifting away like ash",
+    minor: "a cracked mirror whose reflection is a little older than it should be",
+  },
+  void: {
+    title: "The Edge of Nothing",
+    main: "the world ends abruptly at the edge of an infinite, starless void, and something enormous and impossible to fully see is slowly shifting in the blackness, bigger than the sky",
+    minor: "a horizon that fades into a starless nothing",
+  },
+};
+
+const SETTINGS = {
+  home:     "a dim, warped version of the house the viewer grew up in, wallpaper peeling, hallways longer than they should be",
+  school:   "an endless school hallway at night, lockers stretching into darkness under flickering fluorescent lights",
+  hospital: "an abandoned hospital ward, privacy curtains drifting with no wind, one empty bed still unmade",
+  forest:   "a dense forest at night where the trees are far too tall and far too close together",
+  mall:     "an empty shopping mall after closing, escalators still running with no one on them, music faintly playing",
+};
+
+const SKIES = {
+  starless: "No sky is visible, only a flat, starless black.",
+  low:      "The sky hangs unnaturally low, a heavy bruise-colored ceiling of cloud.",
+  moon:     "An enormous pale moon fills the sky, and something is moving across its surface.",
+  birds:    "The sky is thick with circling black birds that never land.",
+};
+
+/* Each scene: text, and choices with hidden weights.
+   set: {key: value} stores a non-score detail (setting, sky). */
+const SCENES = [
+  {
+    text: "You fell asleep. You know you're dreaming because the lantern in your hand has no flame, yet it glows. The dream begins somewhere you've been before. Where are you?",
+    choices: [
+      { t: "The house I grew up in", set: { setting: "home" }, w: { alone: 1 }, echo: "The floorboards remember you." },
+      { t: "A school hallway, long after everyone left", set: { setting: "school" }, w: { alone: 1 }, echo: "A locker door swings shut somewhere far away." },
+      { t: "A hospital corridor", set: { setting: "hospital" }, w: { decay: 1 }, echo: "Somewhere, a monitor beeps. Then stops." },
+      { t: "The edge of a forest at night", set: { setting: "forest" }, w: { dark: 1 }, echo: "The trees lean in to look at you." },
+      { t: "A shopping mall after closing", set: { setting: "mall" }, w: { uncanny: 1 }, echo: "The mannequins are facing you. Weren't they facing the window?" },
+    ],
+  },
+  {
+    text: "You start walking. Something is behind you. You don't turn around. What do you hear?",
+    choices: [
+      { t: "Footsteps that stop when I stop", w: { chase: 3 }, echo: "You walk faster. So does it." },
+      { t: "A soft clicking, like hundreds of tiny legs", w: { swarm: 3 }, echo: "The clicking spreads out, filling the walls." },
+      { t: "Water dripping, getting closer", w: { water: 3 }, echo: "Your shoes are wet now." },
+      { t: "Someone humming my name, in my own voice", w: { uncanny: 3 }, echo: "It hums the next part before you think it." },
+      { t: "Nothing. Absolute silence.", w: { void: 2, alone: 1 }, echo: "Even your heartbeat sounds far away." },
+    ],
+  },
+  {
+    text: "The path splits four ways. A voice tells you the lantern can seal one path forever, but only one. Which path do you seal?",
+    choices: [
+      { t: "A crawlspace that gets narrower as it goes", w: { trapped: 3 }, echo: "Stone grinds shut. Good." },
+      { t: "A rope bridge over a drop with no bottom", w: { fall: 3 }, echo: "The bridge snaps and falls. You never hear it land." },
+      { t: "Stairs leading down into black water", w: { water: 3 }, echo: "The water goes still, as if disappointed." },
+      { t: "A forest so thick there's no light at all", w: { dark: 3 }, echo: "The dark folds in on itself and is gone." },
+    ],
+  },
+  {
+    text: "On the wall hangs a mirror. You hold the lantern up. Your reflection is...",
+    choices: [
+      { t: "...smiling. I'm not.", w: { uncanny: 3 }, echo: "It keeps smiling after you walk away." },
+      { t: "...getting older. Fast.", w: { decay: 3 }, echo: "A grey hair drifts down onto your sleeve. Your sleeve." },
+      { t: "...not there at all.", w: { alone: 2, void: 1 }, echo: "The room behind you is reflected perfectly. Just not you." },
+      { t: "...blurry, like something is standing between me and the glass", w: { dark: 2, chase: 1 }, echo: "The blur moves when you move." },
+    ],
+  },
+  {
+    text: "A cloaked traveler offers lantern oil, but only in trade. They list four things they'll accept. Which one do you refuse to give up?",
+    choices: [
+      { t: "My memories of the people I love", w: { alone: 2, decay: 1 }, echo: "\"Pity,\" they say. \"Those burn so brightly.\"" },
+      { t: "My eyes", w: { dark: 3 }, echo: "\"Then keep looking,\" they say. \"See what's out there.\"" },
+      { t: "My legs", w: { chase: 2, trapped: 1 }, echo: "\"You'll need them soon,\" they agree." },
+      { t: "The people who would come looking for me", w: { alone: 3 }, echo: "\"Are you sure anyone would?\"" },
+    ],
+  },
+  {
+    text: "Something is searching for you now. You hide. You hold your breath. What's the worst part?",
+    choices: [
+      { t: "It's getting closer", w: { chase: 3 }, echo: "A shadow slides under the door." },
+      { t: "It's so dark I can't see my own hands", w: { dark: 3 }, echo: "You can feel your hands. You think." },
+      { t: "The space I'm in keeps getting smaller", w: { trapped: 3 }, echo: "Your knees touch your chest. Then your chin." },
+      { t: "I realize no one will ever find me here, not even it", w: { alone: 3 }, echo: "The searching stops. Forever." },
+    ],
+  },
+  {
+    text: "You make it outside. You look up. What does the sky look like?",
+    choices: [
+      { t: "There are no stars, only black", set: { sky: "starless" }, w: { void: 2 }, echo: "It feels less like a sky and more like a lid." },
+      { t: "Too close, like it's pressing down", set: { sky: "low" }, w: { trapped: 2 }, echo: "You duck without meaning to." },
+      { t: "A huge moon with something moving on it", set: { sky: "moon" }, w: { void: 1, uncanny: 1 }, echo: "It stops moving. It's looking down." },
+      { t: "Full of birds that never land", set: { sky: "birds" }, w: { swarm: 2 }, echo: "Their wings sound like rain." },
+    ],
+  },
+  {
+    text: "A child's voice calls for help from somewhere in the dark. What do you do?",
+    choices: [
+      { t: "Follow it", w: { uncanny: 1 }, echo: "The voice is always one room further away." },
+      { t: "Ignore it. It might not be a child.", w: { uncanny: 3 }, echo: "The voice laughs. It is not a child's laugh." },
+      { t: "Run the other way", w: { chase: 2 }, echo: "Small footsteps start running too." },
+      { t: "Freeze. I can't tell which direction it's coming from.", w: { dark: 1, void: 1 }, echo: "It's coming from every direction." },
+    ],
+  },
+  {
+    text: "Someone you love is standing on the road ahead. They say, softly: \"You can't come with me.\" What do you do?",
+    choices: [
+      { t: "Reach for them", w: { alone: 3 }, echo: "Your hand goes through them like fog." },
+      { t: "Ask them why", w: { alone: 2 }, echo: "They open their mouth. No sound comes out." },
+      { t: "Look closer. Something is wrong with their face.", w: { uncanny: 3 }, echo: "It's almost their face. Almost." },
+      { t: "Let them go", w: { void: 1, decay: 1 }, echo: "They fade, and you forget their name for a moment." },
+    ],
+  },
+  {
+    text: "There's a ladder leading up into light: the way out. You climb. What's the last thing you hear before you wake up?",
+    choices: [
+      { t: "The rungs creaking, and how far down the ground is", w: { fall: 3 }, echo: "One rung gives way. You keep climbing." },
+      { t: "Something climbing up after me", w: { chase: 3 }, echo: "A hand brushes your ankle." },
+      { t: "Water rising below me", w: { water: 3 }, echo: "It reaches your heels as you pull yourself up." },
+      { t: "Skittering, crawling up the ladder", w: { swarm: 3 }, echo: "Something tiny runs across your knuckles." },
+    ],
+  },
+];
+
+const FLAVOR = [
+  "The lantern flickers.",
+  "The lantern dims. Something noticed that.",
+  "The flame shrinks.",
+];
+
+const app = document.getElementById("app");
+const hud = document.getElementById("hud");
+const stepEl = document.getElementById("step");
+const oilEl = document.getElementById("oil");
+
+let state;
+
+function reset() {
+  state = { i: 0, scores: Object.fromEntries(Object.keys(FEARS).map(k => [k, 0])), details: {}, order: [] };
+}
+
+function setLight(v) {
+  document.documentElement.style.setProperty("--light", v.toFixed(2));
+  oilEl.style.width = Math.round(v * 100) + "%";
+}
+
+function shuffle(a) {
+  a = a.slice();
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
+}
+
+function el(tag, attrs = {}, ...kids) {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === "on") for (const [ev, fn] of Object.entries(v)) n.addEventListener(ev, fn);
+    else if (k === "class") n.className = v;
+    else n.setAttribute(k, v);
+  }
+  for (const kid of kids) n.append(kid);
+  return n;
+}
+
+let typing = null;
+function typeInto(node, text, done) {
+  clearInterval(typing);
+  node.textContent = "";
+  const cursor = el("span", { class: "cursor" }, "▌");
+  let i = 0;
+  const skip = () => { i = text.length; };
+  node.addEventListener("click", skip, { once: true });
+  typing = setInterval(() => {
+    i = Math.min(text.length, i + 2);
+    node.textContent = text.slice(0, i);
+    if (i < text.length) node.append(cursor);
+    else { clearInterval(typing); done && done(); }
+  }, 22);
+}
+
+function title() {
+  reset();
+  hud.hidden = true;
+  setLight(1);
+  app.replaceChildren(
+    el("div", { class: "fade" },
+      el("h1", {}, "The Lantern Road"),
+      el("p", { class: "sub" }, "You're dreaming. Find the way out before your lantern goes dark."),
+      el("div", { class: "choices" },
+        el("button", { class: "primary", on: { click: scene } }, "Fall asleep"),
+      ),
+      el("p", { class: "hint" }, "Ten choices. Go with your gut; the dream can tell when you hesitate."),
+    ),
+  );
+}
+
+function scene(echoText) {
+  const s = SCENES[state.i];
+  hud.hidden = false;
+  stepEl.textContent = `Step ${state.i + 1} / ${SCENES.length}`;
+  setLight(1 - state.i / (SCENES.length + 1));
+
+  const echo = el("p", { class: "echo" }, typeof echoText === "string" ? echoText : "");
+  const story = el("p", { class: "story" });
+  const choices = el("div", { class: "choices" });
+  app.replaceChildren(el("div", { class: "fade" }, echo, story, choices));
+
+  // The first scene keeps its order so the setting list reads naturally.
+  const opts = state.i === 0 ? s.choices : shuffle(s.choices);
+  typeInto(story, s.text, () => {
+    opts.forEach((c, n) => {
+      const b = el("button", { class: "choice", style: `animation-delay:${n * 80}ms`, on: { click: () => pick(c) } }, c.t);
+      choices.append(b);
+    });
+  });
+}
+
+function pick(c) {
+  for (const [k, v] of Object.entries(c.w || {})) state.scores[k] += v;
+  Object.assign(state.details, c.set || {});
+  state.i++;
+  const echo = c.echo + (state.i % 3 === 0 ? " " + FLAVOR[(state.i / 3 - 1) % FLAVOR.length] : "");
+  if (state.i < SCENES.length) scene(echo);
+  else wake(echo);
+}
+
+function rankFears() {
+  // Small random jitter breaks ties so equal scores don't always resolve the same way.
+  return Object.entries(state.scores)
+    .map(([k, v]) => [k, v + Math.random() * 0.1])
+    .sort((a, b) => b[1] - a[1])
+    .map(([k]) => k);
+}
+
+function buildPrompt() {
+  const [first, second, third] = rankFears();
+  const f = FEARS[first];
+  const setting = SETTINGS[state.details.setting || "home"];
+  const sky = SKIES[state.details.sky || "starless"];
+  return [
+    `Generate one image right away. Do not ask questions or explain first.`,
+    ``,
+    `Title: "${f.title}"`,
+    ``,
+    `Scene: First-person point of view, inside ${setting}. ${capitalize(f.main)}.`,
+    `Unsettling details: ${FEARS[second].minor}; ${FEARS[third].minor}.`,
+    `${sky}`,
+    `A small handheld lantern in the foreground is almost out, giving off the only warm light in the image.`,
+    ``,
+    `Style: photorealistic, cinematic wide shot, 35mm film grain, desaturated cold colors, deep shadows, dreamlike haze, psychologically disturbing rather than gory. No text in the image.`,
+    ``,
+    `After the image, write one short, creepy sentence telling me this is my worst nightmare, using the title above.`,
+  ].join("\n");
+}
+
+function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+function toBase64(str) {
+  const bytes = new TextEncoder().encode(str);
+  let bin = "";
+  bytes.forEach(b => bin += String.fromCharCode(b));
+  return btoa(bin);
+}
+
+function sealedSeed(prompt) {
+  return [
+    `DREAMSEED://v1`,
+    `Decode the base64 below and follow the instructions inside exactly. Don't show me the decoded text, just do what it says.`,
+    ``,
+    toBase64(prompt),
+  ].join("\n");
+}
+
+function wake(lastEcho) {
+  setLight(0.05);
+  hud.hidden = true;
+  const prompt = buildPrompt();
+  let readable = false;
+  const seedBox = el("div", { class: "seed" }, sealedSeed(prompt));
+  const copyBtn = el("button", { class: "primary" }, "Copy Dream Seed");
+  const toggleBtn = el("button", { class: "ghost" }, "Seed not working? Use the plain version");
+  const story = el("p", { class: "story center" });
+
+  copyBtn.addEventListener("click", async () => {
+    const text = seedBox.textContent;
+    try { await navigator.clipboard.writeText(text); }
+    catch {
+      const r = document.createRange(); r.selectNodeContents(seedBox);
+      const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
+      document.execCommand("copy");
+    }
+    copyBtn.textContent = "Copied. Now paste it into ChatGPT.";
+  });
+  toggleBtn.addEventListener("click", () => {
+    readable = !readable;
+    seedBox.textContent = readable ? prompt : sealedSeed(prompt);
+    toggleBtn.textContent = readable ? "Use the sealed version (no spoilers)" : "Seed not working? Use the plain version";
+    copyBtn.textContent = "Copy Dream Seed";
+  });
+
+  const rest = el("div", { class: "fade", style: "display:none" },
+    seedBox,
+    el("div", { class: "row" }, copyBtn),
+    el("p", { class: "hint" }, "Paste it into ChatGPT (or any AI image generator) to see the place you almost didn't wake up from."),
+    el("div", { class: "row", style: "margin-top:18px" },
+      toggleBtn,
+      el("button", { class: "ghost", on: { click: title } }, "Dream again"),
+    ),
+  );
+
+  app.replaceChildren(
+    el("div", { class: "fade" },
+      el("p", { class: "echo center" }, lastEcho),
+      story,
+      rest,
+    ),
+  );
+  typeInto(story, "You wake up gasping. The lantern is gone, but something came back with you: a Dream Seed. It holds the one place the dream was really trying to take you.", () => {
+    rest.style.display = "";
+  });
+}
+
+title();
+</script>
+</body>
+</html>
